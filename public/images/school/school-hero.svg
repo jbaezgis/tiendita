@@ -1,0 +1,119 @@
+<svg width="800" height="400" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#6366F1;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="pencil1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#EF4444;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#DC2626;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="pencil2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10B981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="pencil3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F59E0B;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D97706;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="pencil4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7C3AED;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="400" fill="url(#bg)" opacity="0.1"/>
+  
+  <!-- Books -->
+  <g transform="translate(100, 150)">
+    <rect x="0" y="0" width="60" height="80" fill="#F3F4F6" stroke="#6B7280" stroke-width="2"/>
+    <rect x="5" y="5" width="50" height="70" fill="#FFFFFF"/>
+    <line x1="15" y1="20" x2="45" y2="20" stroke="#6B7280" stroke-width="1"/>
+    <line x1="15" y1="30" x2="45" y2="30" stroke="#6B7280" stroke-width="1"/>
+    <line x1="15" y1="40" x2="35" y2="40" stroke="#6B7280" stroke-width="1"/>
+  </g>
+  
+  <g transform="translate(170, 140)">
+    <rect x="0" y="0" width="60" height="80" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2"/>
+    <rect x="5" y="5" width="50" height="70" fill="#FFFFFF"/>
+    <line x1="15" y1="20" x2="45" y2="20" stroke="#6B7280" stroke-width="1"/>
+    <line x1="15" y1="30" x2="45" y2="30" stroke="#6B7280" stroke-width="1"/>
+    <line x1="15" y1="40" x2="35" y2="40" stroke="#6B7280" stroke-width="1"/>
+  </g>
+  
+  <g transform="translate(240, 130)">
+    <rect x="0" y="0" width="60" height="80" fill="#DBEAFE" stroke="#3B82F6" stroke-width="2"/>
+    <rect x="5" y="5" width="50" height="70" fill="#FFFFFF"/>
+    <line x1="15" y1="20" x2="45" y2="20" stroke="#6B7280" stroke-width="1"/>
+    <line x1="15" y1="30" x2="45" y2="30" stroke="#6B7280" stroke-width="1"/>
+    <line x1="15" y1="40" x2="35" y2="40" stroke="#6B7280" stroke-width="1"/>
+  </g>
+  
+  <!-- Pencils -->
+  <g transform="translate(400, 100)">
+    <rect x="0" y="0" width="8" height="120" fill="url(#pencil1)" rx="4"/>
+    <polygon points="4,0 0,15 8,15" fill="#F59E0B"/>
+    <rect x="2" y="110" width="4" height="10" fill="#6B7280"/>
+  </g>
+  
+  <g transform="translate(420, 120)">
+    <rect x="0" y="0" width="8" height="120" fill="url(#pencil2)" rx="4"/>
+    <polygon points="4,0 0,15 8,15" fill="#F59E0B"/>
+    <rect x="2" y="110" width="4" height="10" fill="#6B7280"/>
+  </g>
+  
+  <g transform="translate(440, 110)">
+    <rect x="0" y="0" width="8" height="120" fill="url(#pencil3)" rx="4"/>
+    <polygon points="4,0 0,15 8,15" fill="#F59E0B"/>
+    <rect x="2" y="110" width="4" height="10" fill="#6B7280"/>
+  </g>
+  
+  <g transform="translate(460, 130)">
+    <rect x="0" y="0" width="8" height="120" fill="url(#pencil4)" rx="4"/>
+    <polygon points="4,0 0,15 8,15" fill="#F59E0B"/>
+    <rect x="2" y="110" width="4" height="10" fill="#6B7280"/>
+  </g>
+  
+  <!-- Notebook -->
+  <g transform="translate(550, 150)">
+    <rect x="0" y="0" width="80" height="100" fill="#FFFFFF" stroke="#6B7280" stroke-width="2"/>
+    <rect x="5" y="5" width="70" height="90" fill="#F9FAFB"/>
+    <line x1="15" y1="15" x2="65" y2="15" stroke="#6B7280" stroke-width="1"/>
+    <line x1="15" y1="25" x2="65" y2="25" stroke="#6B7280" stroke-width="1"/>
+    <line x1="15" y1="35" x2="65" y2="35" stroke="#6B7280" stroke-width="1"/>
+    <line x1="15" y1="45" x2="65" y2="45" stroke="#6B7280" stroke-width="1"/>
+    <line x1="15" y1="55" x2="65" y2="55" stroke="#6B7280" stroke-width="1"/>
+    <line x1="15" y1="65" x2="65" y2="65" stroke="#6B7280" stroke-width="1"/>
+    <line x1="15" y1="75" x2="65" y2="75" stroke="#6B7280" stroke-width="1"/>
+    <line x1="15" y1="85" x2="45" y2="85" stroke="#6B7280" stroke-width="1"/>
+  </g>
+  
+  <!-- Ruler -->
+  <g transform="translate(650, 180)">
+    <rect x="0" y="0" width="100" height="12" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1"/>
+    <line x1="10" y1="0" x2="10" y2="12" stroke="#6B7280" stroke-width="1"/>
+    <line x1="20" y1="0" x2="20" y2="12" stroke="#6B7280" stroke-width="1"/>
+    <line x1="30" y1="0" x2="30" y2="12" stroke="#6B7280" stroke-width="1"/>
+    <line x1="40" y1="0" x2="40" y2="12" stroke="#6B7280" stroke-width="1"/>
+    <line x1="50" y1="0" x2="50" y2="12" stroke="#6B7280" stroke-width="1"/>
+    <line x1="60" y1="0" x2="60" y2="12" stroke="#6B7280" stroke-width="1"/>
+    <line x1="70" y1="0" x2="70" y2="12" stroke="#6B7280" stroke-width="1"/>
+    <line x1="80" y1="0" x2="80" y2="12" stroke="#6B7280" stroke-width="1"/>
+    <line x1="90" y1="0" x2="90" y2="12" stroke="#6B7280" stroke-width="1"/>
+    <text x="50" y="8" text-anchor="middle" font-family="Arial" font-size="8" fill="#6B7280">cm</text>
+  </g>
+  
+  <!-- Scissors -->
+  <g transform="translate(680, 220)">
+    <path d="M0,0 L15,15 L30,0 L25,5 L15,15 L5,25 Z" fill="#6B7280"/>
+    <path d="M30,0 L15,15 L0,30 L5,25 L15,15 L25,5 Z" fill="#6B7280"/>
+    <circle cx="15" cy="15" r="3" fill="#9CA3AF"/>
+  </g>
+  
+  <!-- Eraser -->
+  <g transform="translate(720, 200)">
+    <rect x="0" y="0" width="30" height="20" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1"/>
+    <rect x="5" y="5" width="20" height="10" fill="#FFFFFF"/>
+  </g>
+</svg> 
