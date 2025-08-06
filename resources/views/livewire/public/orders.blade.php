@@ -3,6 +3,7 @@
 use App\Models\Product;
 use App\Models\Employee;
 use App\Models\Category;
+use App\Models\ProductCategory;
 use App\Models\Order;
 use App\Models\OrderItem;
 use Livewire\WithPagination;
@@ -343,9 +344,7 @@ new #[Layout('components.layouts.public')] class extends Component {
         });
 
         $query->when($this->categoryFilter, function ($query) {
-            // Filter products that might be relevant to the category
-            // This is a basic implementation - you might want to add product-category relationships
-            $query->where('id', '>', 0); // Keep all products for now
+            $query->where('product_category_id', $this->categoryFilter);
         });
         
         return $query->orderBy('description')->paginate($this->perPage);
@@ -355,6 +354,7 @@ new #[Layout('components.layouts.public')] class extends Component {
     {
         return [
             'categories' => Category::orderBy('code')->get(),
+            'productCategories' => ProductCategory::where('is_active', true)->orderBy('name')->get(),
         ];
     }
 }; ?>
@@ -449,19 +449,19 @@ new #[Layout('components.layouts.public')] class extends Component {
                     </flux:button>
                 @endif --}}
             </div>
-            <div class="grid grid-cols-1 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <flux:input 
                     wire:model.live="search" 
                     icon="magnifying-glass" 
                     placeholder="Buscar productos..." 
                     label="Buscar"
                 />
-                {{-- <flux:select wire:model.live="categoryFilter" placeholder="Categoría" label="Filtrar por categoría">
+                <flux:select wire:model.live="categoryFilter" placeholder="Todas las categorías" label="Filtrar por categoría" variant="listbox" searchable>
                     <flux:select.option value="">Todas las categorías</flux:select.option>
-                    @foreach($categories as $category)
-                        <flux:select.option value="{{ $category->id }}">{{ $category->code }}</flux:select.option>
+                    @foreach($productCategories as $category)
+                        <flux:select.option value="{{ $category->id }}">{{ $category->name }}</flux:select.option>
                     @endforeach
-                </flux:select> --}}
+                </flux:select>
             </div>
         </flux:card>
 
