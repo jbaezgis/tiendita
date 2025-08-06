@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
         // Seed dashboard data
         $this->call([
             DashboardSeeder::class,
+            ProductCategorySeeder::class,
         ]);
     }
 }

@@ -3,6 +3,7 @@
 use App\Models\User;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
+use Livewire\WithFileUploads;
 use Spatie\Permission\Models\Role;
 use Flux\Flux;
 use Illuminate\Support\Facades\Hash;
@@ -10,12 +11,16 @@ use Illuminate\Validation\Rule;
 
 new class extends Component
 {
-    use WithPagination;
+    use WithPagination, WithFileUploads;
 
     public $search = '';
     public $statusFilter = '';
     public $roleFilter = '';
     public $departmentFilter = '';
+    
+    // Import functionality
+    public $importFile = null;
+    public $showImportModal = false;
 
     // Modal states
     public $selectedUser = null;
@@ -279,6 +284,159 @@ new class extends Component
         return strtoupper(substr($name, 0, 2));
     }
 
+    public function openImportModal()
+    {
+        $this->showImportModal = true;
+        Flux::modal('import-categories-modal')->show();
+    }
+
+    public function closeImportModal()
+    {
+        $this->showImportModal = false;
+        $this->importFile = null;
+        Flux::modal('import-categories-modal')->close();
+    }
+
+    public function downloadTemplate()
+    {
+        return redirect()->route('users.download-template');
+    }
+
+
+
+    public function importCategories()
+    {
+        if (!$this->importFile) {
+            Flux::toast(
+                heading: 'Error',
+                text: 'No se ha seleccionado ningún archivo',
+                variant: 'error',
+                position: 'top-right'
+            );
+            return;
+        }
+        
+        $this->validate([
+            'importFile' => 'required|file|mimes:xlsx,xls,csv|max:2048',
+        ], [
+            'importFile.required' => 'Debe seleccionar un archivo',
+            'importFile.file' => 'El archivo no es válido',
+            'importFile.mimes' => 'El archivo debe ser Excel (.xlsx, .xls) o CSV',
+            'importFile.max' => 'El archivo no puede ser mayor a 2MB',
+        ]);
+
+        try {
+            // Store the file temporarily
+            $path = $this->importFile->store('temp');
+            $fullPath = storage_path('app/' . $path);
+
+            try {
+                $data = \Maatwebsite\Excel\Facades\Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray, \Maatwebsite\Excel\Concerns\WithHeadingRow {
+                    public function array(array $array)
+                    {
+                        return $array;
+                    }
+                }, $fullPath);
+
+                if (empty($data) || empty($data[0])) {
+                    throw new \Exception('No data found in the Excel file');
+                }
+
+                $rows = $data[0];
+                $updatedCount = 0;
+                $errors = [];
+
+                foreach ($rows as $index => $row) {
+                    try {
+                        if (!isset($row['cedula']) || !isset($row['category'])) {
+                            $errors[] = "Row " . ($index + 2) . ": Missing required columns";
+                            continue;
+                        }
+
+                        $cedula = trim($row['cedula']);
+                        $categoryCode = trim($row['category']);
+
+                        if (empty($cedula) || empty($categoryCode)) {
+                            $errors[] = "Row " . ($index + 2) . ": Empty cedula or category code";
+                            continue;
+                        }
+
+                        // Clean cedula (remove dashes and spaces)
+                        $cleanCedula = preg_replace('/[^0-9]/', '', $cedula);
+                        
+                        // Find user by cedula (try both formats)
+                        $user = \App\Models\User::where('cedula', $cedula)
+                            ->orWhere('cedula', $cleanCedula)
+                            ->first();
+                            
+                        if (!$user) {
+                            $errors[] = "Row " . ($index + 2) . ": User with cedula '{$cedula}' not found";
+                            continue;
+                        }
+
+                        // Find category by code
+                        $category = \App\Models\Category::where('code', $categoryCode)->first();
+                        if (!$category) {
+                            $errors[] = "Row " . ($index + 2) . ": Category with code '{$categoryCode}' not found";
+                            continue;
+                        }
+
+                        // Update user category
+                        $user->update(['category_id' => $category->id]);
+                        $updatedCount++;
+
+                    } catch (\Exception $e) {
+                        $errors[] = "Row " . ($index + 2) . ": " . $e->getMessage();
+                    }
+                }
+
+                // Clean up the temporary file
+                unlink($fullPath);
+
+                if ($updatedCount > 0) {
+                    Flux::toast(
+                        heading: 'Importación completada',
+                        text: "Se actualizaron {$updatedCount} usuarios exitosamente",
+                        variant: 'success',
+                        position: 'top-right'
+                    );
+                }
+
+                if (!empty($errors)) {
+                    Flux::toast(
+                        heading: 'Advertencia',
+                        text: 'Algunos registros no pudieron ser procesados: ' . implode(', ', array_slice($errors, 0, 3)),
+                        variant: 'warning',
+                        position: 'top-right'
+                    );
+                }
+
+            } catch (\Exception $e) {
+                // Clean up the temporary file
+                if (file_exists($fullPath)) {
+                    unlink($fullPath);
+                }
+                
+                Flux::toast(
+                    heading: 'Error',
+                    text: 'Error al procesar el archivo: ' . $e->getMessage(),
+                    variant: 'error',
+                    position: 'top-right'
+                );
+            }
+
+            $this->closeImportModal();
+
+        } catch (\Exception $e) {
+            Flux::toast(
+                heading: 'Error',
+                text: 'Error al importar categorías: ' . $e->getMessage(),
+                variant: 'error',
+                position: 'top-right'
+            );
+        }
+    }
+
     public function getDepartments()
     {
         return [
@@ -331,7 +489,10 @@ new class extends Component
             <flux:heading size="xl">{{ __('app.User Management') }}</flux:heading>
             <flux:text class="text-gray-600 mt-1">{{ __('app.System user administration') }}</flux:text>
         </div>
-        <div>
+        <div class="flex gap-2">
+            <flux:button icon="arrow-down-tray" wire:click="openImportModal">
+                Importar Categorías
+            </flux:button>
             <flux:button variant="primary" icon="plus" wire:click="openCreateModal">
                 {{ __('app.New User') }}
             </flux:button>
@@ -732,5 +893,74 @@ new class extends Component
                 </flux:button>
             </div>
         </div>
+    </flux:modal>
+
+    <!-- Modal de Importar Categorías -->
+    <flux:modal name="import-categories-modal">
+        <form wire:submit.prevent="importCategories">
+            <div class="space-y-6">
+                <div>
+                    <flux:heading size="lg">Importar Categorías de Usuarios</flux:heading>
+                    <flux:subheading>Sube un archivo Excel con las cédulas y códigos de categoría</flux:subheading>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <flux:text class="text-blue-800">
+                        <strong>Formato requerido:</strong><br>
+                        El archivo debe contener las siguientes columnas:<br>
+                        • <strong>cedula</strong>: Cédula del usuario (con o sin guiones)<br>
+                        • <strong>category</strong>: Código de la categoría (ej: grupo-001)<br><br>
+                        <strong>Ejemplo:</strong><br>
+                        cedula,category<br>
+                        001-0000444-9,grupo-001<br>
+                        12345678901,grupo-002<br><br>
+                        <strong>Nota:</strong> El sistema maneja automáticamente cédulas con guiones (001-0000444-9) y sin guiones (00100004449).
+                    </flux:text>
+                    <div class="mt-3">
+                        <flux:button 
+                            type="button" 
+                            variant="outline" 
+                            size="sm" 
+                            icon="arrow-down-tray"
+                            wire:click="downloadTemplate"
+                        >
+                            Descargar Plantilla
+                        </flux:button>
+                    </div>
+                </div>
+
+                <flux:field>
+                    <flux:label>Archivo Excel</flux:label>
+                    <flux:input 
+                        type="file" 
+                        wire:model="importFile" 
+                        accept=".xlsx,.xls,.csv"
+                        placeholder="Seleccionar archivo Excel o CSV"
+                    />
+                    <flux:error name="importFile" />
+                    <flux:description>
+                        Formatos soportados: .xlsx, .xls, .csv (máximo 2MB)
+                    </flux:description>
+                </flux:field>
+
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <flux:text class="text-yellow-800">
+                        <strong>⚠️ Nota importante:</strong><br>
+                        • Solo se actualizarán usuarios que existan en el sistema<br>
+                        • Solo se asignarán categorías que existan en el sistema<br>
+                        • El proceso puede tomar varios minutos dependiendo del tamaño del archivo
+                    </flux:text>
+                </div>
+
+                <div class="flex justify-end gap-3">
+                    <flux:button type="button" variant="ghost" wire:click="closeImportModal">
+                        Cancelar
+                    </flux:button>
+                    <flux:button type="submit" variant="primary">
+                        Importar Categorías
+                    </flux:button>
+                </div>
+            </div>
+        </form>
     </flux:modal>
 </div>

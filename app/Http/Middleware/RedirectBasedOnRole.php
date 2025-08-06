@@ -24,13 +24,22 @@ class RedirectBasedOnRole
         $user = Auth::user();
         $currentRoute = $request->route()->getName();
 
-        // Si el usuario es empleado o supervisor y está intentando acceder al dashboard
-        if (($user->hasRole('empleado') || $user->hasRole('supervisor')) && $currentRoute === 'dashboard') {
+        // Verificar si el usuario tiene roles múltiples (empleado/supervisor Y admin)
+        $hasEmployeeRole = $user->hasRole(['empleado', 'supervisor']);
+        $hasAdminRole = $user->hasRole(['Super Admin', 'admin']);
+
+        // Si el usuario tiene roles múltiples, permitir acceso a ambas áreas
+        if ($hasEmployeeRole && $hasAdminRole) {
+            return $next($request);
+        }
+
+        // Si el usuario es solo empleado o supervisor y está intentando acceder al dashboard
+        if ($hasEmployeeRole && !$hasAdminRole && $currentRoute === 'dashboard') {
             return redirect()->route('public.orders');
         }
 
-        // Si el usuario es Super Admin o Admin y está intentando acceder a public/orders
-        if (($user->hasRole('Super Admin') || $user->hasRole('admin')) && $currentRoute === 'public.orders') {
+        // Si el usuario es solo Super Admin o Admin y está intentando acceder a public/orders
+        if ($hasAdminRole && !$hasEmployeeRole && $currentRoute === 'public.orders') {
             return redirect()->route('dashboard');
         }
 

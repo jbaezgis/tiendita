@@ -15,11 +15,17 @@ class Product extends Model implements HasMedia
         'code',
         'description',
         'price',
+        'product_category_id',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
     ];
+
+    public function category()
+    {
+        return $this->belongsTo(ProductCategory::class, 'product_category_id');
+    }
 
     public function registerMediaCollections(): void
     {

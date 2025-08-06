@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Product;
+use App\Models\ProductCategory;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\Layout;
@@ -36,6 +37,9 @@ new #[Layout('components.layouts.app')] class extends Component {
     #[Validate('nullable|image|max:2048')]
     public $image = '';
 
+    #[Validate('nullable|exists:product_categories,id')]
+    public $product_category_id = '';
+
     public function updatedSearch()
     {
         $this->resetPage();
@@ -53,7 +57,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function openModal()
     {
-        $this->reset(['code', 'description', 'price', 'image', 'editingProduct']);
+        $this->reset(['code', 'description', 'price', 'image', 'product_category_id', 'editingProduct']);
         $this->resetValidation();
         $this->showModal = true;
     }
@@ -61,7 +65,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function closeModal()
     {
         $this->showModal = false;
-        $this->reset(['code', 'description', 'price', 'image', 'editingProduct']);
+        $this->reset(['code', 'description', 'price', 'image', 'product_category_id', 'editingProduct']);
         $this->resetValidation();
     }
 
@@ -71,6 +75,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             'code' => 'required|string|unique:products,code' . ($this->editingProduct ? ',' . $this->editingProduct->id : ''),
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
+            'product_category_id' => 'nullable|exists:product_categories,id',
             'image' => 'nullable|image|max:2048',
         ]);
 
@@ -78,6 +83,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             'code' => $validated['code'],
             'description' => $validated['description'],
             'price' => $validated['price'],
+            'product_category_id' => $validated['product_category_id'],
         ];
 
         if ($this->editingProduct) {
@@ -115,6 +121,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->code = $product->code;
         $this->description = $product->description;
         $this->price = $product->price;
+        $this->product_category_id = $product->product_category_id;
         $this->image = null;
         $this->showModal = true;
     }
@@ -159,6 +166,11 @@ new #[Layout('components.layouts.app')] class extends Component {
         
         return $query->paginate($this->perPage);
     }
+
+    public function getActiveCategoriesProperty()
+    {
+        return ProductCategory::where('is_active', true)->orderBy('name')->get();
+    }
 }; ?>
 
 <div>
@@ -168,6 +180,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             <flux:subheading>Se muestran todos los productos</flux:subheading>
         </div>
         <div class="flex gap-2">
+            <flux:button icon="folder" href="{{ route('product-categories.index') }}" size="sm">Gestionar Categorías</flux:button>
             <flux:button icon="plus" wire:click="openModal" variant="primary" size="sm">Agregar Producto</flux:button>
         </div>
     </div>
@@ -197,6 +210,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             <flux:table.column>Imagen</flux:table.column>
             <flux:table.column sortable :sorted="$sortBy === 'code'" :direction="$sortDirection" wire:click="sort('code')">{{ __('app.Code') }}</flux:table.column>
             <flux:table.column>{{ __('app.Description') }}</flux:table.column>
+            <flux:table.column>Categoría</flux:table.column>
             <flux:table.column sortable :sorted="$sortBy === 'price'" :direction="$sortDirection" wire:click="sort('price')">{{ __('app.Price') }}</flux:table.column>
             <flux:table.column></flux:table.column>
         </flux:table.columns>
@@ -217,6 +231,13 @@ new #[Layout('components.layouts.app')] class extends Component {
                     </flux:table.cell>
                     <flux:table.cell>{{ $item->code }}</flux:table.cell>
                     <flux:table.cell>{{ $item->description }}</flux:table.cell>
+                    <flux:table.cell>
+                        @if($item->category)
+                            <flux:badge variant="info">{{ $item->category->name }}</flux:badge>
+                        @else
+                            <flux:text size="sm" class="text-gray-400">Sin categoría</flux:text>
+                        @endif
+                    </flux:table.cell>
                     <flux:table.cell>${{ number_format($item->price, 2) }}</flux:table.cell>
                     <flux:table.cell>
                         <flux:button size="sm" icon="pencil" wire:click="edit({{ $item->id }})" />
@@ -254,6 +275,22 @@ new #[Layout('components.layouts.app')] class extends Component {
                         rows="3"
                     />
                     @error('description') 
+                        <flux:error>{{ $message }}</flux:error>
+                    @enderror
+                </div>
+                
+                <div>
+                    <flux:select 
+                        wire:model="product_category_id" 
+                        label="Categoría" 
+                        placeholder="Seleccionar categoría"
+                    >
+                        <option value="">Sin categoría</option>
+                        @foreach($this->activeCategories as $category)
+                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                        @endforeach
+                    </flux:select>
+                    @error('product_category_id') 
                         <flux:error>{{ $message }}</flux:error>
                     @enderror
                 </div>

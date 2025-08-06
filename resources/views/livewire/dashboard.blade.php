@@ -223,6 +223,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 <flux:select.option value="30">Últimos 30 días</flux:select.option>
                 <flux:select.option value="90">Últimos 90 días</flux:select.option>
             </flux:select>
+            <flux:button icon="store" variant="primary" color="blue" href="{{ route('public.orders') }}" size="sm">Ir a la Tienda</flux:button>
         </div>
     </div>
 

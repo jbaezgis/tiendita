@@ -6,7 +6,7 @@ use Livewire\Volt\Volt;
 
 Volt::route('/', 'home')->name('home');
 
-Route::middleware(['auth', 'role.redirect', 'ensure.admin.supervisor'])->group(function () {
+Route::middleware(['auth', 'role.redirect'])->group(function () {
     Volt::route('dashboard', 'dashboard')->name('dashboard');
 });
 
@@ -22,6 +22,9 @@ Route::middleware(['auth'])->group(function () {
         // Products routes
         Volt::route('products', 'products.index')->name('products.index');
         
+        // Product Categories routes
+        Volt::route('product-categories', 'products.product-categories')->name('product-categories.index');
+        
         // Categories routes
         Volt::route('categories', 'categories.index')->name('categories.index');
         
@@ -31,6 +34,7 @@ Route::middleware(['auth'])->group(function () {
         // Users management routes
         Volt::route('users', 'users.index')->name('users.index');
         Volt::route('users/{id}/assign-roles', 'users.assign-roles')->name('users.assign-roles');
+        Route::get('users/download-template', [\App\Http\Controllers\UserController::class, 'downloadCategoryTemplate'])->name('users.download-template');
         
         // Internal Orders routes
         Volt::route('orders', 'orders.index')->name('orders.index');
