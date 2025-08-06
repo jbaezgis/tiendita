@@ -4,6 +4,7 @@ use App\Models\Order;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 use Flux\Flux;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 new #[Layout('components.layouts.app')] class extends Component {
     public Order $order;
@@ -17,6 +18,49 @@ new #[Layout('components.layouts.app')] class extends Component {
     {
         $this->order = Order::with(['employee', 'category', 'items.product', 'approver', 'creator'])
             ->findOrFail($id);
+    }
+
+    public function exportPdf()
+    {
+        $order = $this->order->load(['employee', 'category', 'items.product', 'approver', 'creator']);
+        
+        // Convertir logo a base64
+        $logoPath = public_path('images/logo.png');
+        $logoBase64 = null;
+        if (file_exists($logoPath)) {
+            $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
+        }
+        
+        // Calcular número total de páginas basado en el contenido
+        $totalPages = 1; // Página principal siempre existe
+        
+        // Si hay información de aprobación, se agrega una página adicional
+        if ($order->approver) {
+            $totalPages++;
+        }
+        
+        // Si hay muchas notas o el pedido es muy largo, podría necesitar más páginas
+        // Por ahora mantenemos la lógica simple, pero se puede expandir
+        
+        // Calcular número total de páginas basado en el contenido
+        $totalPages = 1; // Página principal siempre existe
+        
+        // Si hay información de aprobación, se agrega una página adicional
+        if ($order->approver) {
+            $totalPages++;
+        }
+        
+        $pdf = Pdf::loadView('pdf.order', compact('order', 'logoBase64', 'totalPages'));
+        $pdf->getDomPDF()->set_option('enable_php', true);
+        $pdf->getDomPDF()->set_option('isPhpEnabled', true);
+        
+        return response()->streamDownload(
+            function () use ($pdf) {
+                echo $pdf->output();
+            },
+            'pedido-' . $order->order_number . '.pdf',
+            ['Content-Type' => 'application/pdf']
+        );
     }
 
     public function openApprovalModal()
@@ -129,6 +173,9 @@ new #[Layout('components.layouts.app')] class extends Component {
             <flux:subheading>Información completa del pedido</flux:subheading>
         </div>
         <div class="flex gap-2">
+            <flux:button icon="document-arrow-down" wire:click="exportPdf" variant="outline" size="sm">
+                Exportar PDF
+            </flux:button>
             <flux:button icon="arrow-left" href="{{ route('orders.index') }}" variant="ghost" size="sm">
                 Volver a Pedidos
             </flux:button>

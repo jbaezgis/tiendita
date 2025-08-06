@@ -409,19 +409,19 @@ new #[Layout('components.layouts.app')] class extends Component {
                 placeholder="Buscar pedidos..." 
                 label="Buscar"
             />
-            <flux:select wire:model.live="statusFilter" placeholder="Estado" label="Estado">
+            <flux:select wire:model.live="statusFilter" variant="listbox" placeholder="Estado" label="Estado" clearable>
                 <flux:select.option value="">Todos los estados</flux:select.option>
                 @foreach($statusOptions as $key => $status)
                     <flux:select.option value="{{ $key }}">{{ $status }}</flux:select.option>
                 @endforeach
             </flux:select>
-            <flux:select wire:model.live="priorityFilter" placeholder="Prioridad" label="Prioridad">
+            <flux:select wire:model.live="priorityFilter" variant="listbox" placeholder="Prioridad" label="Prioridad" clearable>
                 <flux:select.option value="">Todas las prioridades</flux:select.option>
                 @foreach($priorityOptions as $key => $priority)
                     <flux:select.option value="{{ $key }}">{{ $priority }}</flux:select.option>
                 @endforeach
             </flux:select>
-            <flux:select wire:model.live="employeeFilter" placeholder="Empleado" label="Empleado">
+            <flux:select wire:model.live="employeeFilter" variant="listbox" placeholder="Empleado" label="Empleado" searchable clearable>
                 <flux:select.option value="">Todos los empleados</flux:select.option>
                 @foreach($employees as $employee)
                     <flux:select.option value="{{ $employee->id }}">{{ $employee->name }}</flux:select.option>
@@ -478,7 +478,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <flux:table.cell>
                         <div>
                             <flux:text>{{ $order->order_date->format('d/m/Y') }}</flux:text>
-                            <flux:text size="sm" class="text-gray-500 block">{{ $order->created_at->format('H:i') }}</flux:text>
+                            <flux:text size="sm" class="text-gray-500 block">{{ $order->created_at->format('h:i A') }}</flux:text>
                         </div>
                     </flux:table.cell>
 
