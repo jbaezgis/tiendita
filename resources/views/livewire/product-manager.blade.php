@@ -58,8 +58,7 @@
                                     Editar
                                 </flux:button>
                                 <flux:button 
-                                    wire:click="delete({{ $product->id }})" 
-                                    wire:confirm="¿Estás seguro de eliminar este producto?"
+                                    wire:click="openDeleteModal({{ $product->id }})" 
                                     size="sm"
                                     variant="danger"
                                 >
@@ -127,6 +126,32 @@
                                         />
                                         @error('price') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                                     </div>
+                                    <div>
+                                        <flux:input 
+                                            wire:model="image" 
+                                            label="Imagen del producto" 
+                                            type="file" 
+                                            accept="image/*"
+                                        />
+                                        @error('image') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                        @if($image)
+                                            <div class="mt-2">
+                                                <flux:text size="sm" class="text-gray-600">
+                                                    Imagen seleccionada: {{ $image->getClientOriginalName() }}
+                                                </flux:text>
+                                            </div>
+                                        @endif
+                                        @if($editingProduct && $editingProduct->getFirstMediaUrl('images'))
+                                            <div class="mt-2">
+                                                <flux:text size="sm" class="text-gray-600">
+                                                    Imagen actual: 
+                                                </flux:text>
+                                                <img src="{{ $editingProduct->getFirstMediaUrl('images') }}" 
+                                                     alt="Imagen actual" 
+                                                     class="mt-1 w-20 h-20 object-cover rounded">
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -143,4 +168,44 @@
             </div>
         </div>
     @endif
+
+    <!-- Delete Confirmation Modal -->
+    <flux:modal name="delete-product-modal" :open="$showDeleteModal" wire:model="showDeleteModal">
+        <div class="space-y-6">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                    <flux:icon.trash class="h-5 w-5 text-red-600" />
+                </div>
+                <div>
+                    <flux:heading size="lg">Eliminar Producto</flux:heading>
+                    <flux:subheading>¿Estás seguro de que quieres eliminar este producto?</flux:subheading>
+                </div>
+            </div>
+
+            @if($productToDelete)
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <flux:text class="font-medium">{{ $productToDelete->description }}</flux:text>
+                    <flux:text size="sm" class="text-gray-600">
+                        Código: {{ $productToDelete->code }}
+                    </flux:text>
+                    <flux:text size="sm" class="text-gray-600">
+                        Precio: RD$ {{ number_format($productToDelete->price, 2) }}
+                    </flux:text>
+                </div>
+            @endif
+
+            <flux:text class="text-gray-600">
+                Esta acción eliminará el producto permanentemente y no se puede deshacer.
+            </flux:text>
+
+            <div class="flex justify-end gap-3">
+                <flux:button variant="ghost" wire:click="closeDeleteModal">
+                    Cancelar
+                </flux:button>
+                <flux:button variant="danger" wire:click="delete({{ $productToDelete->id ?? 0 }})">
+                    Eliminar
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
 </div>

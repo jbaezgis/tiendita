@@ -286,18 +286,18 @@ new #[Layout('components.layouts.public')] class extends Component {
     </div>
 
     <!-- Order Details Modal -->
-    <flux:modal name="order-modal" :open="$showOrderModal" wire:model="showOrderModal" class="max-w-4xl">
+    <flux:modal name="order-modal" :open="$showOrderModal" wire:model="showOrderModal" class="w-full">
         @if($selectedOrder)
-            <div class="space-y-6">
+            <div class="space-y-4">
                 <!-- Header -->
-                <div class="flex items-center justify-between">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                             <flux:icon.clipboard-document-list class="h-5 w-5 text-blue-600" />
                         </div>
                         <div>
                             <flux:heading size="lg">Pedido {{ $selectedOrder->order_number }}</flux:heading>
-                            <flux:subheading>{{ $selectedOrder->order_date->format('d/m/Y H:i') }}</flux:subheading>
+                            <flux:subheading>{{ $selectedOrder->order_date->format('d/m/Y') }}</flux:subheading>
                         </div>
                     </div>
                     <flux:badge :color="$selectedOrder->getStatusColor()" size="lg">
@@ -306,10 +306,10 @@ new #[Layout('components.layouts.public')] class extends Component {
                 </div>
 
                 <!-- Order Info -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-gray-50 rounded-lg">
                     <div>
                         <flux:text size="sm" class="text-gray-600">Total</flux:text>
-                        <flux:text class="font-bold text-lg">${{ number_format($selectedOrder->total, 2) }}</flux:text>
+                        <flux:text class="font-bold text-lg">RD$ {{ number_format($selectedOrder->total, 2) }}</flux:text>
                     </div>
                     <div>
                         <flux:text size="sm" class="text-gray-600">Prioridad</flux:text>
@@ -331,52 +331,51 @@ new #[Layout('components.layouts.public')] class extends Component {
 
                 <!-- Order Items -->
                 <div>
-                    <flux:heading size="lg" class="mb-4">Productos del Pedido</flux:heading>
-                    <div class="border border-gray-200 rounded-lg overflow-hidden">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Unit.</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @foreach($selectedOrder->items as $item)
-                                    <tr>
-                                        <td class="px-4 py-4">
-                                            <div>
-                                                <flux:text class="font-medium">{{ $item->product->description }}</flux:text>
-                                                <flux:text size="sm" class="text-gray-500">{{ $item->product->code }}</flux:text>
-                                            </div>
-                                        </td>
-                                        <td class="px-4 py-4">
-                                            <flux:text>{{ $item->quantity }}</flux:text>
-                                        </td>
-                                        <td class="px-4 py-4">
-                                            <flux:text>${{ number_format($item->price, 2) }}</flux:text>
-                                        </td>
-                                        <td class="px-4 py-4">
-                                            <flux:text class="font-medium">${{ number_format($item->subtotal, 2) }}</flux:text>
-                                        </td>
-                                        <td class="px-4 py-4">
-                                            <flux:badge :color="$item->getStatusColor()" size="sm">
-                                                {{ ucfirst($item->status) }}
-                                            </flux:badge>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                            <tfoot class="bg-gray-50">
-                                <tr>
-                                    <td colspan="3" class="px-4 py-3 text-right font-medium">Total:</td>
-                                    <td class="px-4 py-3 font-bold text-lg">${{ number_format($selectedOrder->total, 2) }}</td>
-                                    <td></td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                    <flux:heading size="lg" class="mb-3">Productos del Pedido</flux:heading>
+                    <div class="space-y-3">
+                        @foreach($selectedOrder->items as $item)
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg">
+                                <div class="flex items-center gap-3 flex-1">
+                                    <div class="w-12 h-12 rounded-lg flex items-center justify-center bg-gray-100">
+                                        @if($item->product->getFirstMediaUrl('images'))
+                                            <flux:avatar circle src="{{ $item->product->getFirstMediaUrl('images') }}" alt="{{ $item->product->description }}"/>
+                                        @else
+                                            <flux:icon.cube class="h-8 w-8 text-gray-400" />
+                                        @endif
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <flux:text class="font-medium truncate text-sm sm:text-base">{{ $item->product->description }}</flux:text>
+                                        <flux:text size="sm" class="text-gray-500">{{ $item->product->code }}</flux:text>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <flux:text size="sm" class="text-gray-600">Cantidad:</flux:text>
+                                        <flux:text class="font-medium">{{ $item->quantity }}</flux:text>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <flux:text size="sm" class="text-gray-600">Precio:</flux:text>
+                                        <flux:text class="font-medium">RD$ {{ number_format($item->price, 2) }}</flux:text>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <flux:text size="sm" class="text-gray-600">Subtotal:</flux:text>
+                                        <flux:text class="font-bold">RD$ {{ number_format($item->subtotal, 2) }}</flux:text>
+                                    </div>
+                                    {{-- <flux:badge :color="$item->getStatusColor()" size="sm">
+                                        {{ ucfirst($item->status) }}
+                                    </flux:badge> --}}
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    
+                    <!-- Total -->
+                    <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+                        <div class="flex justify-between items-center">
+                            <flux:text class="font-bold text-lg">Total del Pedido:</flux:text>
+                            <flux:text class="font-bold text-xl text-green-600">RD$ {{ number_format($selectedOrder->total, 2) }}</flux:text>
+                        </div>
                     </div>
                 </div>
 
@@ -384,8 +383,8 @@ new #[Layout('components.layouts.public')] class extends Component {
                 @if($selectedOrder->notes)
                     <div>
                         <flux:heading size="lg" class="mb-2">Notas</flux:heading>
-                        <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                            <flux:text>{{ $selectedOrder->notes }}</flux:text>
+                        <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <flux:text size="sm">{{ $selectedOrder->notes }}</flux:text>
                         </div>
                     </div>
                 @endif
@@ -394,19 +393,19 @@ new #[Layout('components.layouts.public')] class extends Component {
                 @if($selectedOrder->status === 'rejected' && $selectedOrder->rejection_reason)
                     <div>
                         <flux:heading size="lg" class="mb-2">Razón del Rechazo</flux:heading>
-                        <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
-                            <flux:text>{{ $selectedOrder->rejection_reason }}</flux:text>
+                        <div class="p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <flux:text size="sm">{{ $selectedOrder->rejection_reason }}</flux:text>
                         </div>
                     </div>
                 @endif
 
                 <!-- Actions -->
-                <div class="flex justify-end gap-3">
-                    <flux:button type="button" variant="ghost" wire:click="closeOrderModal">
+                <div class="flex flex-col sm:flex-row justify-end gap-2">
+                    <flux:button type="button" variant="ghost" wire:click="closeOrderModal" class="flex-1 sm:flex-none">
                         Cerrar
                     </flux:button>
                     @if($selectedOrder->status === 'pending')
-                        <flux:button variant="danger" wire:click="cancelOrder({{ $selectedOrder->id }})">
+                        <flux:button variant="danger" wire:click="cancelOrder({{ $selectedOrder->id }})" class="flex-1 sm:flex-none">
                             Cancelar Pedido
                         </flux:button>
                     @endif

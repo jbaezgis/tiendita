@@ -50,6 +50,7 @@ return [
     'Sort by' => 'Ordenar por',
     'Ascending' => 'Ascendente',
     'Descending' => 'Descendente',
+    'Export Excel' => 'Exportar Excel',
 
     // Authentication
     'Log in to your account' => 'Iniciar sesión en tu cuenta',

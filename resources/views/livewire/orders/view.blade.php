@@ -222,7 +222,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <flux:badge :color="$order->getStatusColor()" size="lg">
                         {{ $order::getStatusOptions()[$order->status] }}
                     </flux:badge>
-                    <flux:text size="sm" class="text-gray-500">{{ $order->created_at->format('d/m/Y') }}</flux:text>
+                    {{-- <flux:text size="sm" class="text-gray-500">{{ $order->created_at->format('d/m/Y') }}</flux:text> --}}
                 </div>
             </div>
         </flux:card>

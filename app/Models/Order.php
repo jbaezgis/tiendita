@@ -191,4 +191,14 @@ class Order extends Model
             default => 'blue',
         };
     }
+
+    public function getStatusText(): string
+    {
+        return self::getStatusOptions()[$this->status] ?? 'Desconocido';
+    }
+
+    public function getPriorityText(): string
+    {
+        return self::getPriorityOptions()[$this->priority] ?? 'Desconocido';
+    }
 }

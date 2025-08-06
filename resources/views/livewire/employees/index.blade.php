@@ -22,7 +22,9 @@ new #[Layout('components.layouts.app')] class extends Component {
     public $sortBy = 'id';
     public $sortDirection = 'desc';
     public $showModal = false;
+    public $showDeleteModal = false;
     public $editingEmployee = null;
+    public $employeeToDelete = null;
 
     #[Validate('required|string')]
     public $code = '';
@@ -139,6 +141,20 @@ new #[Layout('components.layouts.app')] class extends Component {
             variant: 'success',
             position: 'top-right',
         );
+        $this->showDeleteModal = false;
+        $this->employeeToDelete = null;
+    }
+
+    public function openDeleteModal(Employee $employee)
+    {
+        $this->employeeToDelete = $employee;
+        $this->showDeleteModal = true;
+    }
+
+    public function closeDeleteModal()
+    {
+        $this->showDeleteModal = false;
+        $this->employeeToDelete = null;
     }
 
     public function toggleStatus(Employee $employee)
@@ -318,7 +334,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <flux:table.cell>
                         <div class="flex gap-1">
                             <flux:button size="sm" icon="pencil" wire:click="edit({{ $employee->id }})" />
-                            <flux:button size="sm" icon="trash" variant="danger" wire:click="delete({{ $employee->id }})" wire:confirm="¿Estás seguro de eliminar este empleado?" />
+                            <flux:button size="sm" icon="trash" variant="danger" wire:click="openDeleteModal({{ $employee->id }})" />
                         </div>
                     </flux:table.cell>
                 </flux:table.row>
@@ -425,6 +441,49 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </flux:button>
                 <flux:button wire:click="save" variant="primary">
                     {{ $editingEmployee ? 'Actualizar' : 'Crear' }}
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
+
+    <!-- Delete Confirmation Modal -->
+    <flux:modal name="delete-employee-modal" :open="$showDeleteModal" wire:model="showDeleteModal">
+        <div class="space-y-6">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                    <flux:icon.trash class="h-5 w-5 text-red-600" />
+                </div>
+                <div>
+                    <flux:heading size="lg">Eliminar Empleado</flux:heading>
+                    <flux:subheading>¿Estás seguro de que quieres eliminar este empleado?</flux:subheading>
+                </div>
+            </div>
+
+            @if($employeeToDelete)
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <flux:text class="font-medium">{{ $employeeToDelete->name }}</flux:text>
+                    <flux:text size="sm" class="text-gray-600">
+                        Código: {{ $employeeToDelete->code }}
+                    </flux:text>
+                    <flux:text size="sm" class="text-gray-600">
+                        Cédula: {{ $employeeToDelete->cedula }}
+                    </flux:text>
+                    <flux:text size="sm" class="text-gray-600">
+                        Cargo: {{ $employeeToDelete->position }}
+                    </flux:text>
+                </div>
+            @endif
+
+            <flux:text class="text-gray-600">
+                Esta acción eliminará el empleado permanentemente y no se puede deshacer. También se eliminará el usuario asociado.
+            </flux:text>
+
+            <div class="flex justify-end gap-3">
+                <flux:button variant="ghost" wire:click="closeDeleteModal">
+                    Cancelar
+                </flux:button>
+                <flux:button variant="danger" wire:click="delete({{ $employeeToDelete->id ?? 0 }})">
+                    Eliminar
                 </flux:button>
             </div>
         </div>

@@ -7,6 +7,8 @@ use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 use Flux\Flux;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\OrdersExport;
 
 new #[Layout('components.layouts.app')] class extends Component {
     use WithPagination;
@@ -162,6 +164,21 @@ new #[Layout('components.layouts.app')] class extends Component {
         );
     }
 
+    public function export()
+    {
+        return Excel::download(
+            new OrdersExport(
+                $this->search,
+                $this->statusFilter,
+                $this->priorityFilter,
+                $this->employeeFilter,
+                $this->sortBy,
+                $this->sortDirection
+            ),
+            'pedidos-' . now()->format('d-m-Y h:i a') . '.xlsx'
+        );
+    }
+
     public function getOrdersProperty()
     {
         $query = Order::with(['employee', 'category', 'items.product', 'approver']);
@@ -233,6 +250,8 @@ new #[Layout('components.layouts.app')] class extends Component {
         </div>
         <div class="flex gap-2">
             <flux:button icon="plus" href="{{ route('orders.create') }}" variant="primary" size="sm">{{ __('app.Create Order') }}</flux:button>
+            <flux:separator vertical />
+            <flux:button wire:click="export" icon="document-arrow-down" variant="outline" size="sm">{{ __('app.Export Excel') }}</flux:button>
         </div>
     </div>
 

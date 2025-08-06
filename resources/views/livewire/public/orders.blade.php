@@ -26,6 +26,9 @@ new #[Layout('components.layouts.public')] class extends Component {
     public $cart = [];
     public $showCart = false;
     public $showOrderModal = false;
+    public $showClearCartModal = false;
+    public $showRemoveItemModal = false;
+    public $itemToRemove = null;
     public $productQuantities = [];
     public $pendingOrders = 0;
     
@@ -140,6 +143,44 @@ new #[Layout('components.layouts.public')] class extends Component {
     {
         $this->cart = [];
         $this->updateCartTotals();
+        $this->showClearCartModal = false;
+        
+        Flux::toast(
+            heading: 'Carrito vaciado',
+            text: 'Todos los productos han sido removidos del carrito',
+            variant: 'success',
+            position: 'top-right'
+        );
+    }
+
+    public function openClearCartModal()
+    {
+        $this->showClearCartModal = true;
+    }
+
+    public function closeClearCartModal()
+    {
+        $this->showClearCartModal = false;
+    }
+
+    public function openRemoveItemModal($productId)
+    {
+        $this->itemToRemove = $productId;
+        $this->showRemoveItemModal = true;
+    }
+
+    public function closeRemoveItemModal()
+    {
+        $this->showRemoveItemModal = false;
+        $this->itemToRemove = null;
+    }
+
+    public function confirmRemoveItem()
+    {
+        if ($this->itemToRemove) {
+            $this->removeFromCart($this->itemToRemove);
+            $this->closeRemoveItemModal();
+        }
     }
 
     private function updateCartTotals()
@@ -375,9 +416,9 @@ new #[Layout('components.layouts.public')] class extends Component {
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Welcome Section -->
-        <div class="mb-8">
-            <flux:heading size="2xl" class="text-gray-900">¡Bienvenido, {{ $this->employee->name }}!</flux:heading>
-            <flux:subheading class="text-gray-600">Selecciona los productos que necesitas para tu familia.</flux:subheading>
+        <div class="mb-6 sm:mb-8">
+            <flux:heading size="xl" class="sm:text-2xl text-gray-900 text-center sm:text-left">¡Bienvenido, {{ $this->employee->name }}!</flux:heading>
+            <flux:subheading class="text-gray-600 text-center sm:text-left">Selecciona los productos que necesitas para tu familia.</flux:subheading>
         </div>
 
         {{-- pedido pendiente --}}
@@ -392,11 +433,23 @@ new #[Layout('components.layouts.public')] class extends Component {
         @endif
         <!-- Filters -->
         <flux:card class="mb-6">
-            <div class="flex items-center justify-between mb-4">
-                <flux:heading size="lg">Productos Disponibles</flux:heading>
-                <flux:text size="sm" class="text-gray-500">{{ $this->products->total() }} producto(s)</flux:text>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <div>
+                    <flux:heading size="lg">Productos Disponibles</flux:heading>
+                    <flux:text size="sm" class="text-gray-500">{{ $this->products->total() }} producto(s)</flux:text>
+                </div>
+                {{-- @if(!empty($cart))
+                    <flux:button 
+                        variant="ghost" 
+                        size="sm" 
+                        icon="shopping-cart"
+                        wire:click="openCart"
+                    >
+                        Ver Carrito ({{ $this->cartCount }})
+                    </flux:button>
+                @endif --}}
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4">
                 <flux:input 
                     wire:model.live="search" 
                     icon="magnifying-glass" 
@@ -413,76 +466,98 @@ new #[Layout('components.layouts.public')] class extends Component {
         </flux:card>
 
         <!-- Products Grid -->
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
+        <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 mb-8">
             @foreach ($this->products as $product)
-                <div class="flex flex-col h-full p-0 rounded-lg border {{ isset($cart[$product->id]) ? 'border-2 border-blue-500 shadow-sm' : '' }}" wire:click="addToCartWithQuantity({{ $product->id }})">
+                <div class="flex flex-col h-full rounded-lg border {{ isset($cart[$product->id]) ? 'border-2 border-blue-500 shadow-sm' : 'border-gray-200' }} bg-white overflow-hidden relative">
+                    @if(isset($cart[$product->id]))
+                        <div class="absolute top-2 right-2 z-10">
+                            <flux:button 
+                                size="xs" 
+                                icon="trash" 
+                                variant="danger"
+                                wire:click.stop="openRemoveItemModal({{ $product->id }})"
+                                class="w-8 h-8 p-0 shadow-sm"
+                            />
+                        </div>
+                    @endif
                     <div class="flex-1">
-                        <div class="aspect-square bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
-                            <flux:icon.cube class="h-12 w-12 text-gray-400" />
+                        <div class="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
+                            @if($product->getFirstMediaUrl('images'))
+                                <img src="{{ $product->getFirstMediaUrl('images') }}" 
+                                     alt="{{ $product->description }}" 
+                                     class="w-full h-full object-cover">
+                            @else
+                                <flux:icon.cube class="h-12 w-12 text-gray-400" />
+                            @endif
                         </div>
                         
-                        <div class="px-2">
-                            <flux:text class="font-medium mb-2 line-clamp-2">{{ $product->description }}</flux:text>
-                            {{-- <flux:text size="sm" class="text-gray-600 mb-2">Código: {{ $product->code }}</flux:text> --}}
+                        <div class="p-3">
+                            <flux:text class="font-medium mb-2 line-clamp-2 text-sm sm:text-base">{{ $product->description }}</flux:text>
                             
-                            <div class="text-right pb-2">
+                            <div class="text-right mb-3">
                                 <flux:text class="font-bold text-lg text-blue-600">
                                     RD$ {{ number_format($product->price, 2) }}
                                 </flux:text>
                             </div>
 
-                        </div>
-                        {{-- cart info --}}
-                        @if(isset($cart[$product->id]))
-                            <div class="bg-blue-100 rounded-b-lg p-2">
-                                <flux:text size="sm" class="text-blue-700 text-center">
-                                    {{ $cart[$product->id]['quantity'] }} agregados al carrito
-                                </flux:text>
-                                <flux:text size="sm" class="text-blue-900 text-center">
-                                    Subtotal: RD$ {{ number_format($cart[$product->id]['price'] * $cart[$product->id]['quantity'], 2) }}
-                                </flux:text>
+                            <!-- Quantity Controls -->
+                            <div class="">
+                                @if(isset($cart[$product->id]))
+                                    <div class="flex justify-between items-center gap-2">
+                                        <flux:button 
+                                            size="xs" 
+                                            icon="minus" 
+                                            variant="ghost"
+                                            wire:click.stop="updateCartQuantity({{ $product->id }}, {{ $cart[$product->id]['quantity'] - 1 }})"
+                                            class="w-8 h-8 p-0"
+                                        />
+                                        <flux:text class="font-medium text-sm min-w-[2rem] text-center">
+                                            {{ $cart[$product->id]['quantity'] }}
+                                        </flux:text>
+                                        <flux:button 
+                                            size="xs" 
+                                            icon="plus" 
+                                            variant="ghost"
+                                            wire:click.stop="updateCartQuantity({{ $product->id }}, {{ $cart[$product->id]['quantity'] + 1 }})"
+                                            class="w-8 h-8 p-0"
+                                        />
+                                    </div>
+                                    
+                                @else
+                                    <flux:button 
+                                        size="sm" 
+                                        icon="plus" 
+                                        variant="primary"
+                                        wire:click.stop="addToCartWithQuantity({{ $product->id }})"
+                                        class="flex-1 w-full"
+                                    >
+                                        Agregar
+                                    </flux:button>
+                                @endif
                             </div>
-                        @endif
-                        {{-- end cart info --}}
-                    </div>
-                    
-                    {{-- <div class="mt-4 pt-4 border-t">
-                        <div class="flex items-center gap-2">
-                            <flux:input 
-                                type="number" 
-                                min="1" 
-                                value="1" 
-                                size="sm"
-                                class="w-20"
-                                wire:model="productQuantities.{{ $product->id }}"
-                            />
-                            <flux:button 
-                                variant="primary" 
-                                size="sm" 
-                                icon="plus"
-                                class="flex-1"
-                                wire:click="addToCartWithQuantity({{ $product->id }})"
-                            >
-                                Agregar
-                            </flux:button>
                         </div>
-                    </div> --}}
+                    </div>
                 </div>
             @endforeach
         </div>
 
         <!-- Pagination -->
-        <div class="mt-6 mb-20">
+        <div class="mt-6 mb-24 sm:mb-20">
             {{ $this->products->links() }}
         </div>
     </div>
 
     @if(!empty($cart))
-        <div class="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4">
-            <div class=" px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-                <flux:heading size="lg">
-                    Total: RD$ {{ number_format($this->cartTotal, 2) }}
-                </flux:heading>
+        <div class="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-3 sm:p-4 z-50">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                <div class="flex-1">
+                    <flux:heading size="lg" class="text-center sm:text-left">
+                        Total: RD$ {{ number_format($this->cartTotal, 2) }}
+                    </flux:heading>
+                    <flux:text size="sm" class="text-gray-600 text-center sm:text-left">
+                        {{ $this->cartCount }} productos en el carrito
+                    </flux:text>
+                </div>
                 @php
                     $user = auth()->user();
                     $purchaseLimit = $user->category ? $user->category->purchase_limit : null;
@@ -491,20 +566,30 @@ new #[Layout('components.layouts.public')] class extends Component {
                         ->count();
                     $canCreateOrder = $pendingOrders === 0 && (!$purchaseLimit || $this->cartTotal <= $purchaseLimit);
                 @endphp
-                <flux:button 
-                    variant="primary" 
-                    color="blue" 
-                    size="sm" 
-                    wire:click="openOrderModal"
-                    {{-- @if(!$canCreateOrder) disabled @endif --}}
-                    :disabled="$pendingOrders > 0"
-                >
-                    Crear Pedido
-                </flux:button>
+                <div class="flex gap-2">
+                    <flux:button 
+                        variant="ghost" 
+                        size="sm" 
+                        icon="trash"
+                        wire:click="openClearCartModal"
+                    >
+                        Vaciar
+                    </flux:button>
+                    <flux:button 
+                        variant="primary" 
+                        color="blue" 
+                        size="sm" 
+                        wire:click="openOrderModal"
+                        :disabled="$pendingOrders > 0"
+                        class="flex-1 sm:flex-none"
+                    >
+                        Crear Pedido
+                    </flux:button>
+                </div>
             </div>
-            <div class="px-4 sm:px-6 lg:px-8">
-                @if($purchaseLimit)
-                    <flux:text class="text-gray-500">
+            @if($purchaseLimit)
+                <div class="mt-2 text-center sm:text-left">
+                    <flux:text size="sm" class="text-gray-500">
                         Límite: RD$ {{ number_format($purchaseLimit, 2) }}
                         @if($this->cartTotal > $purchaseLimit)
                             <span class="text-red-500"> - Límite excedido</span>
@@ -540,34 +625,54 @@ new #[Layout('components.layouts.public')] class extends Component {
                         <flux:text size="sm" class="text-gray-400 block">Agrega productos para comenzar</flux:text>
                     </div>
                 @else
-                    <div class="space-y-4">
+                    <div class="space-y-3">
                         @foreach($cart as $productId => $item)
-                            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                                <div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                                    <flux:icon.cube class="h-6 w-6 text-gray-500" />
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                <!-- Product Info -->
+                                <div class="flex items-center gap-3 flex-1">
+                                    <div class="w-12 h-12 rounded-lg flex items-center justify-center bg-white">
+                                        @if($item['product']->getFirstMediaUrl('images'))
+                                            <flux:avatar circle src="{{ $item['product']->getFirstMediaUrl('images') }}" alt="{{ $item['product']->description }}"/>
+                                        @else
+                                            <flux:icon.cube class="h-8 w-8 text-gray-400" />
+                                        @endif
+                                    </div>
+                                    
+                                    <div class="flex-1 min-w-0">
+                                        <flux:text class="font-medium truncate text-sm sm:text-base">{{ $item['product']->description }}</flux:text>
+                                        <flux:text size="sm" class="text-gray-600">RD$ {{ number_format($item['price'], 2) }}</flux:text>
+                                        <flux:text size="xs" class="text-gray-500">Subtotal: RD$ {{ number_format($item['subtotal'], 2) }}</flux:text>
+                                    </div>
                                 </div>
                                 
-                                <div class="flex-1 min-w-0">
-                                    <flux:text class="font-medium truncate">{{ $item['product']->description }}</flux:text>
-                                    <flux:text size="sm" class="text-gray-600">${{ number_format($item['price'], 2) }}</flux:text>
-                                </div>
-                                
-                                <div class="flex items-center gap-2">
-                                    <flux:input 
-                                        type="number" 
-                                        min="1" 
-                                        value="{{ $item['quantity'] }}"
-                                        size="sm"
-                                        class="w-16"
-                                        wire:change="updateCartQuantity({{ $productId }}, $event.target.value)"
-                                    />
+                                <!-- Quantity Controls -->
+                                <div class="flex items-center justify-between sm:justify-end gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <flux:button 
+                                            size="xs" 
+                                            icon="minus" 
+                                            variant="ghost"
+                                            wire:click="updateCartQuantity({{ $productId }}, {{ $item['quantity'] - 1 }})"
+                                            class="w-8 h-8 p-0"
+                                        />
+                                        <flux:text class="font-medium text-sm min-w-[2rem] text-center">
+                                            {{ $item['quantity'] }}
+                                        </flux:text>
+                                        <flux:button 
+                                            size="xs" 
+                                            icon="plus" 
+                                            variant="ghost"
+                                            wire:click="updateCartQuantity({{ $productId }}, {{ $item['quantity'] + 1 }})"
+                                            class="w-8 h-8 p-0"
+                                        />
+                                    </div>
                                     <flux:button 
-                                        variant="ghost" 
-                                        size="sm"
-                                        wire:click="removeFromCart({{ $productId }})"
-                                    >
-                                        🗑️
-                                    </flux:button>
+                                        variant="danger" 
+                                        icon="trash"
+                                        size="xs"
+                                        wire:click="openRemoveItemModal({{ $productId }})"
+                                        class="w-8 h-8 p-0"
+                                    />
                                 </div>
                             </div>
                         @endforeach
@@ -578,18 +683,21 @@ new #[Layout('components.layouts.public')] class extends Component {
             <!-- Cart Footer -->
             @if(!empty($cart))
                 <div class="border-t pt-4 space-y-4">
-                    <div class="flex justify-between items-center">
-                        <flux:text class="font-bold text-lg">Total:</flux:text>
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                        <div>
+                            <flux:text class="font-bold text-lg">Total:</flux:text>
+                            <flux:text size="sm" class="text-gray-600">{{ $this->cartCount }} productos</flux:text>
+                        </div>
                         <flux:text class="font-bold text-xl text-green-600">
-                            ${{ number_format($this->cartTotal, 2) }}
+                            RD$ {{ number_format($this->cartTotal, 2) }}
                         </flux:text>
                     </div>
                     
-                    <div class="space-y-2">
-                        <flux:button variant="primary" class="w-full" wire:click="openOrderModal">
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <flux:button variant="primary" class="flex-1" wire:click="openOrderModal">
                             Crear Pedido
                         </flux:button>
-                        <flux:button variant="ghost" class="w-full" wire:click="clearCart">
+                        <flux:button variant="ghost" class="flex-1 sm:flex-none" wire:click="openClearCartModal">
                             Vaciar Carrito
                         </flux:button>
                     </div>
@@ -664,6 +772,71 @@ new #[Layout('components.layouts.public')] class extends Component {
                 </flux:button>
                 <flux:button variant="primary" wire:click="createOrder">
                     Crear Pedido
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
+
+    <!-- Clear Cart Confirmation Modal -->
+    <flux:modal name="clear-cart-modal" :open="$showClearCartModal" wire:model="showClearCartModal">
+        <div class="space-y-6">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                    <flux:icon.trash class="h-5 w-5 text-red-600" />
+                </div>
+                <div>
+                    <flux:heading size="lg">Vaciar Carrito</flux:heading>
+                    <flux:subheading>¿Estás seguro de que quieres vaciar el carrito?</flux:subheading>
+                </div>
+            </div>
+
+            <flux:text class="text-gray-600">
+                Esta acción eliminará todos los productos del carrito y no se puede deshacer.
+            </flux:text>
+
+            <div class="flex justify-end gap-3">
+                <flux:button variant="ghost" wire:click="closeClearCartModal">
+                    Cancelar
+                </flux:button>
+                <flux:button variant="danger" wire:click="clearCart">
+                    Vaciar Carrito
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
+
+    <!-- Remove Item Confirmation Modal -->
+    <flux:modal name="remove-item-modal" :open="$showRemoveItemModal" wire:model="showRemoveItemModal">
+        <div class="space-y-6">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                    <flux:icon.trash class="h-5 w-5 text-red-600" />
+                </div>
+                <div>
+                    <flux:heading size="lg">Eliminar Producto</flux:heading>
+                    <flux:subheading>¿Estás seguro de que quieres eliminar este producto del carrito?</flux:subheading>
+                </div>
+            </div>
+
+            @if($itemToRemove && isset($cart[$itemToRemove]))
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <flux:text class="font-medium">{{ $cart[$itemToRemove]['product']->description }}</flux:text>
+                    <flux:text size="sm" class="text-gray-600">
+                        Cantidad: {{ $cart[$itemToRemove]['quantity'] }} × RD$ {{ number_format($cart[$itemToRemove]['price'], 2) }}
+                    </flux:text>
+                </div>
+            @endif
+
+            <flux:text class="text-gray-600">
+                Esta acción eliminará el producto del carrito y no se puede deshacer.
+            </flux:text>
+
+            <div class="flex justify-end gap-3">
+                <flux:button variant="ghost" wire:click="closeRemoveItemModal">
+                    Cancelar
+                </flux:button>
+                <flux:button variant="danger" wire:click="confirmRemoveItem">
+                    Eliminar
                 </flux:button>
             </div>
         </div>
