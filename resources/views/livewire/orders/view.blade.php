@@ -247,7 +247,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Unit.</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                {{-- <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th> --}}
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -276,10 +276,10 @@ new #[Layout('components.layouts.app')] class extends Component {
                                     <td class="px-4 py-4">
                                         <flux:text class="font-medium">${{ number_format($item->subtotal, 2) }}</flux:text>
                                     </td>
-                                    <td class="px-4 py-4">
+                                    {{-- <td class="px-4 py-4">
                                         <flux:badge :color="$item->getStatusColor()" size="sm">
                                             {{ ucfirst($item->status) }}
-                                        </flux:badge>
+                                        </flux:badge> --}}
                                     </td>
                                 </tr>
                             @endforeach
@@ -333,17 +333,17 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <flux:text class="font-medium">{{ $order->order_date->format('d/m/Y') }}</flux:text>
                     </div>
                     
-                    <div class="flex justify-between">
+                    {{-- <div class="flex justify-between">
                         <flux:text class="text-gray-600">Prioridad:</flux:text>
                         <flux:badge :color="$order->getPriorityColor()" size="sm">
                             {{ $order::getPriorityOptions()[$order->priority] }}
                         </flux:badge>
-                    </div>
+                    </div> --}}
                     
                     @if($order->category)
                         <div class="flex justify-between">
                             <flux:text class="text-gray-600">Categoría:</flux:text>
-                            <flux:text class="font-medium">{{ $order->category->code }}</flux:text>
+                            <flux:text class="font-medium">RD$ {{ number_format($order->category->salary_from, 2) }} - RD$ {{ number_format($order->category->salary_to, 2) }}</flux:text>
                         </div>
                         
                         <div class="flex justify-between">

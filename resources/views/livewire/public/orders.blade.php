@@ -78,6 +78,24 @@ new #[Layout('components.layouts.public')] class extends Component {
     {
         $productId = $product->id;
         
+        // Check purchase limit before adding to cart
+        $user = auth()->user();
+        $purchaseLimit = $user->category ? $user->category->purchase_limit : null;
+        
+        if ($purchaseLimit) {
+            $newTotal = $this->cartTotal + ($product->price * $quantity);
+            
+            if ($newTotal > $purchaseLimit) {
+                Flux::toast(
+                    heading: 'Límite excedido',
+                    text: "No puedes agregar este producto. El total excedería tu límite de RD$ " . number_format($purchaseLimit, 2),
+                    variant: 'error',
+                    position: 'top-right'
+                );
+                return;
+            }
+        }
+        
         if (isset($this->cart[$productId])) {
             $this->cart[$productId]['quantity'] += $quantity;
             $this->cart[$productId]['subtotal'] = $this->cart[$productId]['price'] * $this->cart[$productId]['quantity'];
@@ -120,6 +138,26 @@ new #[Layout('components.layouts.public')] class extends Component {
         if ($quantity <= 0) {
             unset($this->cart[$productId]);
         } else {
+            // Check purchase limit before updating quantity
+            $user = auth()->user();
+            $purchaseLimit = $user->category ? $user->category->purchase_limit : null;
+            
+            if ($purchaseLimit) {
+                $currentItemTotal = $this->cart[$productId]['subtotal'] ?? 0;
+                $newItemTotal = $this->cart[$productId]['price'] * $quantity;
+                $newTotal = $this->cartTotal - $currentItemTotal + $newItemTotal;
+                
+                if ($newTotal > $purchaseLimit) {
+                    Flux::toast(
+                        heading: 'Límite excedido',
+                        text: "No puedes aumentar la cantidad. El total excedería tu límite de RD$ " . number_format($purchaseLimit, 2),
+                        variant: 'error',
+                        position: 'top-right'
+                    );
+                    return;
+                }
+            }
+            
             $this->cart[$productId]['quantity'] = $quantity;
             $this->cart[$productId]['subtotal'] = $this->cart[$productId]['price'] * $quantity;
         }
@@ -199,6 +237,33 @@ new #[Layout('components.layouts.public')] class extends Component {
     public function getCartCountProperty()
     {
         return collect($this->cart)->sum('quantity');
+    }
+
+    public function getRemainingAmountProperty()
+    {
+        $user = auth()->user();
+        $purchaseLimit = $user->category ? $user->category->purchase_limit : null;
+        
+        if (!$purchaseLimit) {
+            return null;
+        }
+        
+        return $purchaseLimit - $this->cartTotal;
+    }
+
+    public function getIsNearLimitProperty()
+    {
+        $user = auth()->user();
+        $purchaseLimit = $user->category ? $user->category->purchase_limit : null;
+        
+        if (!$purchaseLimit) {
+            return false;
+        }
+        
+        $remainingAmount = $this->remainingAmount;
+        $tenPercentOfLimit = $purchaseLimit * 0.1;
+        
+        return $remainingAmount > 0 && $remainingAmount <= $tenPercentOfLimit;
     }
 
     public function toggleCart()
@@ -593,6 +658,8 @@ new #[Layout('components.layouts.public')] class extends Component {
                         Límite: RD$ {{ number_format($purchaseLimit, 2) }}
                         @if($this->cartTotal > $purchaseLimit)
                             <span class="text-red-500"> - Límite excedido</span>
+                        @elseif($this->isNearLimit)
+                            <span class="text-orange-500"> - Te quedan RD$ {{ number_format($this->remainingAmount, 2) }}</span>
                         @endif
                     </flux:text>
                 @else
