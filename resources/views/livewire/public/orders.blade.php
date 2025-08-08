@@ -567,7 +567,7 @@ new #[Layout('components.layouts.public')] class extends Component {
                         </div>
                         
                         <div class="p-3">
-                            <flux:text class="font-medium mb-2 line-clamp-3 text-sm sm:text-base">{{ $product->description }}</flux:text>
+                            <flux:text class="font-medium mb-2 text-sm sm:text-base">{{ $product->description }}</flux:text>
                             
                             <div class="text-right mb-3">
                                 <flux:text class="font-bold text-lg text-blue-600">
