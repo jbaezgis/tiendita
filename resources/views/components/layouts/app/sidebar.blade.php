@@ -20,7 +20,7 @@
                 <flux:navlist.group :heading="__('Administration')" class="grid">
                     <flux:navlist.item icon="cube" :href="route('products.index')" :current="request()->routeIs('products.*')" wire:navigate>{{ __('Productos') }}</flux:navlist.item>
                     <flux:navlist.item icon="tag" :href="route('categories.index')" :current="request()->routeIs('categories.*')" wire:navigate>{{ __('Categorías') }}</flux:navlist.item>
-                    <flux:navlist.item icon="users" :href="route('employees.index')" :current="request()->routeIs('employees.*')" wire:navigate>{{ __('Empleados') }}</flux:navlist.item>
+                    {{-- <flux:navlist.item icon="users" :href="route('employees.index')" :current="request()->routeIs('employees.*')" wire:navigate>{{ __('Empleados') }}</flux:navlist.item> --}}
                 </flux:navlist.group>
 
                 <flux:navlist.group :heading="__('Seguridad')" class="grid">
