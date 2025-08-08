@@ -534,6 +534,8 @@ new #[Layout('components.layouts.public')] class extends Component {
         <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 mb-8">
             @foreach ($this->products as $product)
                 <div class="flex flex-col h-full rounded-lg border {{ isset($cart[$product->id]) ? 'border-2 border-blue-500 shadow-sm' : 'border-gray-200' }} bg-white overflow-hidden relative">
+                    
+
                     @if(isset($cart[$product->id]))
                         <div class="absolute top-2 right-2 z-10">
                             <flux:button 
@@ -546,7 +548,7 @@ new #[Layout('components.layouts.public')] class extends Component {
                         </div>
                     @endif
                     <div class="flex-1">
-                        <div class="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
+                        <div class="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden relative">
                             @if($product->getFirstMediaUrl('images'))
                                 <img src="{{ $product->getFirstMediaUrl('images') }}" 
                                      alt="{{ $product->description }}" 
@@ -554,6 +556,14 @@ new #[Layout('components.layouts.public')] class extends Component {
                             @else
                                 <flux:icon.cube class="h-12 w-12 text-gray-400" />
                             @endif
+
+                            <div class="absolute bottom-2 left-2 z-10">
+                                @if($product->category->name == 'Cuadernos')
+                                    <flux:badge variant="primary" color="blue" size="sm">
+                                        El diseño puede variar.
+                                    </flux:badge>
+                                @endif
+                            </div>
                         </div>
                         
                         <div class="p-3">
