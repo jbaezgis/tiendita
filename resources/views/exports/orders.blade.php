@@ -10,6 +10,9 @@
         <th>Fecha de Creación</th>
         <th>Aprobado Por</th>
         <th>Fecha de Aprobación</th>
+        <th>Rechazado Por</th>
+        <th>Fecha de Rechazo</th>
+        <th>Razón del Rechazo</th>
     </tr>
     </thead>
     <tbody>
@@ -24,6 +27,9 @@
             <td>{{ $order->created_at->format('d/m/Y H:i') }}</td>
             <td>{{ $order->approver->name ?? 'N/A' }}</td>
             <td>{{ $order->approved_at ? $order->approved_at->format('d/m/Y H:i') : 'N/A' }}</td>
+            <td>{{ $order->rejector->name ?? 'N/A' }}</td>
+            <td>{{ $order->rejected_at ? $order->rejected_at->format('d/m/Y H:i') : 'N/A' }}</td>
+            <td>{{ $order->rejection_reason ?? 'N/A' }}</td>
         </tr>
     @endforeach
     </tbody>

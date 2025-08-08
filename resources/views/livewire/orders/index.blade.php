@@ -181,7 +181,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function getOrdersProperty()
     {
-        $query = Order::with(['employee', 'category', 'items.product', 'approver']);
+        $query = Order::with(['employee', 'category', 'items.product', 'approver', 'rejector']);
         
         if ($this->sortBy) {
             $query->orderBy($this->sortBy, $this->sortDirection);
@@ -523,9 +523,31 @@ new #[Layout('components.layouts.app')] class extends Component {
                     </flux:table.cell>
 
                     <flux:table.cell>
-                        <flux:badge :color="$order->getStatusColor()" size="sm">
-                            {{ $order::getStatusOptions()[$order->status] }}
-                        </flux:badge>
+                        <div class="space-y-1">
+                            <flux:badge :color="$order->getStatusColor()" size="sm">
+                                {{ $order::getStatusOptions()[$order->status] }}
+                            </flux:badge>
+                            @if($order->status === 'rejected' && $order->rejector)
+                                <flux:text size="xs" class="text-red-600 block">
+                                    Rechazado por: {{ $order->rejector->name }}
+                                </flux:text>
+                                @if($order->rejected_at)
+                                    <flux:text size="xs" class="text-gray-500 block">
+                                        {{ $order->rejected_at->format('d/m/Y h:i A') }}
+                                    </flux:text>
+                                @endif
+                            @endif
+                            @if($order->status === 'approved' && $order->approver)
+                                <flux:text size="xs" class="text-green-600 block">
+                                    Aprobado por: {{ $order->approver->name }}
+                                </flux:text>
+                                @if($order->approved_at)
+                                    <flux:text size="xs" class="text-gray-500 block">
+                                        {{ $order->approved_at->format('d/m/Y h:i A') }}
+                                    </flux:text>
+                                @endif
+                            @endif
+                        </div>
                     </flux:table.cell>
 
                     <flux:table.cell>

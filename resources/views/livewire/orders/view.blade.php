@@ -16,13 +16,13 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function mount($id)
     {
-        $this->order = Order::with(['employee', 'category', 'items.product', 'approver', 'creator'])
+        $this->order = Order::with(['employee', 'category', 'items.product', 'approver', 'rejector', 'creator'])
             ->findOrFail($id);
     }
 
     public function exportPdf()
     {
-        $order = $this->order->load(['employee', 'category', 'items.product', 'approver', 'creator']);
+        $order = $this->order->load(['employee', 'category', 'items.product', 'approver', 'rejector', 'creator']);
         
         // Convertir logo a base64
         $logoPath = public_path('images/logo.png');
@@ -98,7 +98,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         }
 
         $this->order->approve(auth()->user());
-        $this->order = $this->order->fresh(['employee', 'category', 'items.product', 'approver', 'creator']);
+        $this->order = $this->order->fresh(['employee', 'category', 'items.product', 'approver', 'rejector', 'creator']);
 
         Flux::toast(
             heading: 'Pedido aprobado',
@@ -130,7 +130,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         }
 
         $this->order->reject(auth()->user(), $this->rejectionReason);
-        $this->order = $this->order->fresh(['employee', 'category', 'items.product', 'approver', 'creator']);
+        $this->order = $this->order->fresh(['employee', 'category', 'items.product', 'approver', 'rejector', 'creator']);
 
         Flux::toast(
             heading: 'Pedido rechazado',
@@ -155,7 +155,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         }
 
         $this->order->deliver();
-        $this->order = $this->order->fresh(['employee', 'category', 'items.product', 'approver', 'creator']);
+        $this->order = $this->order->fresh(['employee', 'category', 'items.product', 'approver', 'rejector', 'creator']);
 
         Flux::toast(
             heading: 'Pedido entregado',
@@ -379,6 +379,25 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <div class="flex justify-between">
                             <flux:text class="text-gray-600">Fecha de aprobación:</flux:text>
                             <flux:text class="font-medium">{{ $order->approved_at->format('d/m/Y H:i') }}</flux:text>
+                        </div>
+                    </div>
+                </flux:card>
+            @endif
+
+            <!-- Rejection Info -->
+            @if($order->rejector)
+                <flux:card>
+                    <flux:heading size="lg" class="mb-4">Información de Rechazo</flux:heading>
+                    
+                    <div class="space-y-4">
+                        <div class="flex justify-between">
+                            <flux:text class="text-gray-600">Rechazado por:</flux:text>
+                            <flux:text class="font-medium">{{ $order->rejector->name }}</flux:text>
+                        </div>
+                        
+                        <div class="flex justify-between">
+                            <flux:text class="text-gray-600">Fecha de rechazo:</flux:text>
+                            <flux:text class="font-medium">{{ $order->rejected_at->format('d/m/Y H:i') }}</flux:text>
                         </div>
                     </div>
                 </flux:card>

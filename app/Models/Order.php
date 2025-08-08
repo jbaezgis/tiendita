@@ -24,6 +24,8 @@ class Order extends Model
         'rejection_reason',
         'approved_by',
         'approved_at',
+        'rejected_by',
+        'rejected_at',
         'created_by',
         'updated_by',
     ];
@@ -31,6 +33,7 @@ class Order extends Model
     protected $casts = [
         'order_date' => 'date',
         'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
         'subtotal' => 'decimal:2',
         'total' => 'decimal:2',
     ];
@@ -77,6 +80,11 @@ class Order extends Model
         return $this->belongsTo(User::class, 'approved_by');
     }
 
+    public function rejector(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
+    }
+
     public static function generateOrderNumber(): string
     {
         $prefix = 'ORD';
@@ -119,8 +127,8 @@ class Order extends Model
         $this->update([
             'status' => 'rejected',
             'rejection_reason' => $reason,
-            'approved_by' => $rejector->id,
-            'approved_at' => now(),
+            'rejected_by' => $rejector->id,
+            'rejected_at' => now(),
         ]);
     }
 

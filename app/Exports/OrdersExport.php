@@ -31,7 +31,7 @@ class OrdersExport implements FromView
      */
     public function view(): View
     {
-        $query = Order::with(['employee', 'category', 'items.product', 'approver']);
+        $query = Order::with(['employee', 'category', 'items.product', 'approver', 'rejector']);
         
         if ($this->sortBy) {
             $query->orderBy($this->sortBy, $this->sortDirection);

@@ -333,28 +333,50 @@
         </div>
     @endif
 
-    {{-- @if($order->approver)
+    @if($order->approver || $order->rejector)
         <div class="page-break"></div>
         <div class="header">
-            <h1>Información de Aprobación</h1>
+            <h1>Información de Procesamiento</h1>
         </div>
         
         <div class="order-info">
-            <div class="info-section">
-                <h3>Aprobación</h3>
-                <div class="info-row">
-                    <span class="info-label">Aprobado por:</span>
-                    <span class="info-value">{{ $order->approver->name }}</span>
+            @if($order->approver)
+                <div class="info-section">
+                    <h3>Aprobación</h3>
+                    <div class="info-row">
+                        <span class="info-label">Aprobado por:</span>
+                        <span class="info-value">{{ $order->approver->name }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Fecha de aprobación:</span>
+                        <span class="info-value">{{ $order->approved_at->format('d/m/Y H:i') }}</span>
+                    </div>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Fecha de aprobación:</span>
-                    <span class="info-value">{{ $order->approved_at->format('d/m/Y H:i') }}</span>
+            @endif
+            
+            @if($order->rejector)
+                <div class="info-section">
+                    <h3>Rechazo</h3>
+                    <div class="info-row">
+                        <span class="info-label">Rechazado por:</span>
+                        <span class="info-value">{{ $order->rejector->name }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Fecha de rechazo:</span>
+                        <span class="info-value">{{ $order->rejected_at->format('d/m/Y H:i') }}</span>
+                    </div>
+                    @if($order->rejection_reason)
+                        <div class="info-row">
+                            <span class="info-label">Razón del rechazo:</span>
+                            <span class="info-value">{{ $order->rejection_reason }}</span>
+                        </div>
+                    @endif
                 </div>
-            </div>
+            @endif
         </div>
         
         <div class="page-number">Página 2 de {{ $totalPages }}</div>
-    @endif --}}
+    @endif
 
         <div class="footer">
             <p>Documento generado automáticamente por el Sistema de Gestión Escolar</p>

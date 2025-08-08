@@ -71,7 +71,7 @@ new #[Layout('components.layouts.public')] class extends Component {
             return;
         }
 
-        $this->selectedOrder = $order->load(['items.product', 'approver']);
+        $this->selectedOrder = $order->load(['items.product', 'approver', 'rejector']);
         $this->showOrderModal = true;
     }
 
@@ -106,7 +106,7 @@ new #[Layout('components.layouts.public')] class extends Component {
 
     public function getOrdersProperty()
     {
-        $query = Order::with(['items.product', 'approver'])
+        $query = Order::with(['items.product', 'approver', 'rejector'])
             ->where('employee_id', $this->employee->id);
         
         if ($this->sortBy) {
@@ -325,6 +325,12 @@ new #[Layout('components.layouts.public')] class extends Component {
                         <div>
                             <flux:text size="sm" class="text-gray-600">Aprobado por</flux:text>
                             <flux:text class="font-medium">{{ $selectedOrder->approver->name }}</flux:text>
+                        </div>
+                    @endif
+                    @if($selectedOrder->rejector)
+                        <div>
+                            <flux:text size="sm" class="text-gray-600">Rechazado por</flux:text>
+                            <flux:text class="font-medium">{{ $selectedOrder->rejector->name }}</flux:text>
                         </div>
                     @endif
                 </div>
