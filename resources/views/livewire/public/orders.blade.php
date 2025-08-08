@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\ProductCategory;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\StoreConfig;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
@@ -54,6 +55,16 @@ new #[Layout('components.layouts.public')] class extends Component {
             ->whereIn('status', ['pending'])
             ->count();
 
+        // Verificar si la tienda está abierta
+        if (!StoreConfig::isStoreOpen()) {
+            Flux::toast(
+                heading: 'Tienda Cerrada',
+                text: 'La tienda está cerrada actualmente. No se pueden realizar pedidos.',
+                variant: 'error',
+                position: 'top-right'
+            );
+        }
+
         // if ($this->pendingOrders > 0) {
         //     Flux::toast(
         //         heading: 'Pedido pendiente',
@@ -76,6 +87,17 @@ new #[Layout('components.layouts.public')] class extends Component {
 
     public function addToCart(Product $product, $quantity = 1)
     {
+        // Verificar si la tienda está abierta
+        if (!StoreConfig::isStoreOpen()) {
+            Flux::toast(
+                heading: 'Tienda Cerrada',
+                text: 'No se pueden agregar productos mientras la tienda esté cerrada',
+                variant: 'error',
+                position: 'top-right'
+            );
+            return;
+        }
+
         $productId = $product->id;
         
         // Check purchase limit before adding to cart
@@ -125,6 +147,17 @@ new #[Layout('components.layouts.public')] class extends Component {
 
     public function addToCartWithQuantity($productId)
     {
+        // Verificar si la tienda está abierta
+        if (!StoreConfig::isStoreOpen()) {
+            Flux::toast(
+                heading: 'Tienda Cerrada',
+                text: 'No se pueden agregar productos mientras la tienda esté cerrada',
+                variant: 'error',
+                position: 'top-right'
+            );
+            return;
+        }
+
         $quantity = $this->productQuantities[$productId] ?? 1;
         $product = Product::find($productId);
         
@@ -135,6 +168,17 @@ new #[Layout('components.layouts.public')] class extends Component {
 
     public function updateCartQuantity($productId, $quantity)
     {
+        // Verificar si la tienda está abierta
+        if (!StoreConfig::isStoreOpen()) {
+            Flux::toast(
+                heading: 'Tienda Cerrada',
+                text: 'No se pueden modificar productos mientras la tienda esté cerrada',
+                variant: 'error',
+                position: 'top-right'
+            );
+            return;
+        }
+
         if ($quantity <= 0) {
             unset($this->cart[$productId]);
         } else {
@@ -308,6 +352,17 @@ new #[Layout('components.layouts.public')] class extends Component {
 
     public function createOrder()
     {
+        // Verificar si la tienda está abierta
+        if (!StoreConfig::isStoreOpen()) {
+            Flux::toast(
+                heading: 'Tienda Cerrada',
+                text: 'No se pueden crear pedidos mientras la tienda esté cerrada',
+                variant: 'error',
+                position: 'top-right'
+            );
+            return;
+        }
+
         if (empty($this->cart)) {
             Flux::toast(
                 heading: 'Error',
@@ -480,6 +535,24 @@ new #[Layout('components.layouts.public')] class extends Component {
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Store Status Callout -->
+        @if(!StoreConfig::isStoreOpen())
+            <flux:callout variant="danger" icon="exclamation-triangle" class="mb-6">
+                <flux:callout.heading>Tienda Cerrada</flux:callout.heading>
+                <flux:callout.text>
+                    La tienda está cerrada actualmente. No se pueden realizar nuevos pedidos.
+                    Los pedidos existentes permanecen visibles en el historial.
+                </flux:callout.text>
+            </flux:callout>
+        @else
+            {{-- <flux:callout variant="success" icon="check-circle" class="mb-6">
+                <flux:callout.heading>Tienda Abierta</flux:callout.heading>
+                <flux:callout.text>
+                    La tienda está abierta. Puedes realizar pedidos normalmente.
+                </flux:callout.text>
+            </flux:callout> --}}
+        @endif
+
         <!-- Welcome Section -->
         <div class="mb-6 sm:mb-8">
             <flux:heading size="xl" class="sm:text-2xl text-gray-900 text-center sm:text-left">¡Bienvenido, {{ $this->employee->name }}!</flux:heading>

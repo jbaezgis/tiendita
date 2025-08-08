@@ -40,12 +40,20 @@ Route::middleware(['auth'])->group(function () {
         Volt::route('orders', 'orders.index')->name('orders.index');
         Volt::route('orders/create', 'orders.create')->name('orders.create');
         Volt::route('orders/{id}/view', 'orders.view')->name('orders.view');
+        
+        // Store Configuration routes
+        Volt::route('store-config', 'store-config.index')->name('store-config.index');
     });
     
     // Public Orders routes (for employees and supervisors) - con middleware de redirección y verificación
     Route::middleware(['role.redirect', 'ensure.employee'])->group(function () {
-        Volt::route('public/orders', 'public.orders')->name('public.orders');
+        // Ruta de historial - siempre accesible
         Volt::route('public/orders/history', 'public.orders-history')->name('public.orders.history');
+        
+        // Ruta de creación de pedidos - protegida por estado de tienda
+        Route::middleware(['ensure.store.open'])->group(function () {
+            Volt::route('public/orders', 'public.orders')->name('public.orders');
+        });
     });
 });
 

@@ -5,6 +5,7 @@ use App\Models\Employee;
 use App\Models\Category;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\StoreConfig;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
@@ -34,6 +35,16 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function mount()
     {
         $this->order_date = now()->toDateString();
+        
+        // Verificar si la tienda está abierta
+        if (!StoreConfig::isStoreOpen()) {
+            Flux::toast(
+                heading: 'Tienda Cerrada',
+                text: 'La tienda está cerrada actualmente. No se pueden crear nuevos pedidos.',
+                variant: 'error',
+                position: 'top-right'
+            );
+        }
     }
 
     public function updatedSearch()
@@ -49,6 +60,17 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function addToCart(Product $product, $quantity = 1)
     {
+        // Verificar si la tienda está abierta
+        if (!StoreConfig::isStoreOpen()) {
+            Flux::toast(
+                heading: 'Tienda Cerrada',
+                text: 'No se pueden agregar productos mientras la tienda esté cerrada',
+                variant: 'error',
+                position: 'top-right'
+            );
+            return;
+        }
+
         if (!$this->employee_id) {
             Flux::toast(
                 heading: 'Error',
@@ -90,6 +112,17 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function addToCartWithQuantity($productId)
     {
+        // Verificar si la tienda está abierta
+        if (!StoreConfig::isStoreOpen()) {
+            Flux::toast(
+                heading: 'Tienda Cerrada',
+                text: 'No se pueden agregar productos mientras la tienda esté cerrada',
+                variant: 'error',
+                position: 'top-right'
+            );
+            return;
+        }
+
         $quantity = $this->productQuantities[$productId] ?? 1;
         $product = Product::find($productId);
         
@@ -100,6 +133,17 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function updateCartQuantity($productId, $quantity)
     {
+        // Verificar si la tienda está abierta
+        if (!StoreConfig::isStoreOpen()) {
+            Flux::toast(
+                heading: 'Tienda Cerrada',
+                text: 'No se pueden modificar productos mientras la tienda esté cerrada',
+                variant: 'error',
+                position: 'top-right'
+            );
+            return;
+        }
+
         if ($quantity <= 0) {
             unset($this->cart[$productId]);
         } else {
@@ -153,6 +197,17 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function createOrder()
     {
+        // Verificar si la tienda está abierta
+        if (!StoreConfig::isStoreOpen()) {
+            Flux::toast(
+                heading: 'Tienda Cerrada',
+                text: 'No se pueden crear pedidos mientras la tienda esté cerrada',
+                variant: 'error',
+                position: 'top-right'
+            );
+            return;
+        }
+
         $this->validate([
             'employee_id' => 'required|exists:employees,id',
             'priority' => 'required|in:low,medium,high,urgent',

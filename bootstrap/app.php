@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'ensure.employee' => \App\Http\Middleware\EnsureEmployeeRole::class,
             'ensure.admin.supervisor' => \App\Http\Middleware\EnsureAdminOrSupervisor::class,
             'ensure.admin.access' => \App\Http\Middleware\EnsureAdminAccess::class,
+            'ensure.store.open' => \App\Http\Middleware\EnsureStoreIsOpen::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             DashboardSeeder::class,
             ProductCategorySeeder::class,
+            StoreConfigSeeder::class,
         ]);
     }
 }

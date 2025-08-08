@@ -5,6 +5,7 @@ use App\Models\OrderItem;
 use App\Models\Employee;
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\StoreConfig;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 use Carbon\Carbon;
@@ -208,6 +209,17 @@ new #[Layout('components.layouts.app')] class extends Component {
             'topEmployeesData' => $this->topEmployeesData,
         ];
     }
+
+    public function getStoreStatusProperty()
+    {
+        $config = StoreConfig::getCurrentConfig();
+        return [
+            'is_open' => StoreConfig::isStoreOpen(),
+            'status' => $config->getStoreStatus(),
+            'season' => $config->current_season,
+            'season_status' => $config->getSeasonStatus(),
+        ];
+    }
 }; ?>
 
 <div class="space-y-6">
@@ -226,6 +238,33 @@ new #[Layout('components.layouts.app')] class extends Component {
             <flux:button icon="store" variant="primary" color="blue" href="{{ route('public.orders') }}" size="sm">Ir a la Tienda</flux:button>
         </div>
     </div>
+
+    <!-- Store Status Callout -->
+    @if(!$this->storeStatus['is_open'])
+        <flux:callout variant="danger" icon="exclamation-triangle">
+            <flux:callout.heading>Tienda Cerrada</flux:callout.heading>
+            <flux:callout.text>
+                La tienda está cerrada actualmente. Los empleados no pueden crear nuevos pedidos.
+            </flux:callout.text>
+            <x-slot name="actions">
+                <flux:button href="{{ route('store-config.index') }}" size="sm">
+                    Configurar Tienda
+                </flux:button>
+            </x-slot>
+        </flux:callout>
+    @else
+        <flux:callout variant="success" icon="check-circle">
+            <flux:callout.heading>Tienda Abierta</flux:callout.heading>
+            <flux:callout.text>
+                {{ $this->storeStatus['status'] }} - Temporada: {{ $this->storeStatus['season'] }}
+            </flux:callout.text>
+            <x-slot name="actions">
+                <flux:button variant="ghost" href="{{ route('store-config.index') }}" size="sm">
+                    Ver Configuración
+                </flux:button>
+            </x-slot>
+        </flux:callout>
+    @endif
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
