@@ -559,7 +559,7 @@ new #[Layout('components.layouts.public')] class extends Component {
 
                             <div class="absolute bottom-2 left-2 z-10">
                                 @if($product->category->name == 'Cuadernos')
-                                    <flux:badge variant="primary" color="blue" size="sm">
+                                    <flux:badge variant="solid" color="blue" size="sm">
                                         El diseño puede variar.
                                     </flux:badge>
                                 @endif
