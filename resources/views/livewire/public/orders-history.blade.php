@@ -257,12 +257,12 @@ new #[Layout('components.layouts.public')] class extends Component {
                                         Ver Detalles
                                     </flux:menu.item>
                                     
-                                    @if($order->status === 'pending')
+                                    {{-- @if($order->status === 'pending')
                                         <flux:menu.separator />
                                         <flux:menu.item icon="x-circle" variant="danger" wire:click="cancelOrder({{ $order->id }})">
                                             Cancelar Pedido
                                         </flux:menu.item>
-                                    @endif
+                                    @endif --}}
                                 </flux:menu>
                             </flux:dropdown>
                         </flux:table.cell>
