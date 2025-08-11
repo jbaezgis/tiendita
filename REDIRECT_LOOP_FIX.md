@@ -41,7 +41,17 @@ if (!$user->employee) {
 }
 ```
 
-### 2. Mejora en la Lógica de Redirección de Login
+### 2. Comportamiento de Redirección por Roles
+
+**Archivo:** `app/Http/Middleware/RedirectBasedOnRole.php`
+
+**Lógica implementada:**
+- **Usuarios con rol de empleado + empleado vinculado**: Redirigidos a `public/orders` al intentar acceder al dashboard
+- **Usuarios con rol de admin**: Acceso completo al dashboard sin redirecciones
+- **Usuarios con roles múltiples**: Acceso completo a ambas áreas
+- **Usuarios sin empleado vinculado**: Acceso al dashboard con advertencia
+
+### 3. Mejora en la Lógica de Redirección de Login
 
 **Archivo:** `resources/views/livewire/auth/login.blade.php`
 
@@ -61,7 +71,7 @@ if (!$user->employee) {
 }
 ```
 
-### 3. Optimización del Middleware `RedirectBasedOnRole`
+### 4. Optimización del Middleware `RedirectBasedOnRole`
 
 **Archivo:** `app/Http/Middleware/RedirectBasedOnRole.php`
 
@@ -81,7 +91,7 @@ if ($hasEmployeeRole && !$hasAdminRole && $currentRoute === 'dashboard') {
 }
 ```
 
-### 4. Advertencia Visual en el Dashboard
+### 5. Advertencia Visual en el Dashboard
 
 **Archivo:** `resources/views/livewire/dashboard.blade.php`
 
@@ -113,10 +123,17 @@ php artisan user:list-without-employee
 php artisan user:link-employee {user_id} {employee_id}
 ```
 
+### Probar Comportamiento de Acceso
+
+```bash
+php artisan user:test-access
+```
+
 ## Comportamiento Resultante
 
 ### Usuarios con Empleado Vinculado
-- ✅ Acceso normal a `public.orders`
+- ✅ Redirección automática a `public.orders` al intentar acceder al dashboard
+- ✅ Acceso directo a `public.orders` desde el login
 - ✅ Funcionalidad completa del sistema
 
 ### Usuarios sin Empleado Vinculado
@@ -124,9 +141,14 @@ php artisan user:link-employee {user_id} {employee_id}
 - ✅ Mensaje de advertencia visible
 - ✅ Posibilidad de vincular empleado posteriormente
 
-### Usuarios Administradores
+### Usuarios Administradores (Super Admin, Admin)
 - ✅ Acceso completo al dashboard
+- ✅ Sin redirecciones automáticas
 - ✅ Sin restricciones por falta de empleado
+
+### Usuarios con Roles Múltiples (empleado + admin)
+- ✅ Acceso completo a ambas áreas
+- ✅ Sin redirecciones automáticas
 
 ## Archivos Modificados
 
@@ -136,6 +158,7 @@ php artisan user:link-employee {user_id} {employee_id}
 4. `resources/views/livewire/dashboard.blade.php` - Advertencia visual
 5. `app/Console/Commands/LinkUserToEmployee.php` - Comando de vinculación (nuevo)
 6. `app/Console/Commands/ListUsersWithoutEmployee.php` - Comando de listado (nuevo)
+7. `app/Console/Commands/TestUserAccess.php` - Comando de prueba (nuevo)
 
 ## Beneficios
 

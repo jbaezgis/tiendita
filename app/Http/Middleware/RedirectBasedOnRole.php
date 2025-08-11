@@ -35,7 +35,7 @@ class RedirectBasedOnRole
 
         // Si el usuario es solo empleado o supervisor y está intentando acceder al dashboard
         if ($hasEmployeeRole && !$hasAdminRole && $currentRoute === 'dashboard') {
-            // Solo redirigir si tiene empleado vinculado
+            // Redirigir a public/orders si tiene empleado vinculado
             if ($user->employee) {
                 return redirect()->route('public.orders');
             }
