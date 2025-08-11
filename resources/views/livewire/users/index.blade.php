@@ -36,6 +36,7 @@ new class extends Component
         'password' => '',
         'email_verified_at' => null,
         'category_id' => '',
+        'employee_id' => '',
     ];
 
     public function mount()
@@ -75,6 +76,7 @@ new class extends Component
             'password' => '12345678', // Default password
             'email_verified_at' => now(),
             'category_id' => '',
+            'employee_id' => '',
         ];
     }
 
@@ -104,6 +106,7 @@ new class extends Component
             'password' => '',
             'email_verified_at' => $this->selectedUser->email_verified_at,
             'category_id' => $this->selectedUser->category_id ?? '',
+            'employee_id' => $this->selectedUser->employee_id ?? '',
         ];
         
         Flux::modal('edit-user-modal')->show();
@@ -160,6 +163,7 @@ new class extends Component
                 'password' => Hash::make($this->form['password']),
                 'email_verified_at' => $this->form['email_verified_at'],
                 'category_id' => $this->form['category_id'] ?: null,
+                'employee_id' => $this->form['employee_id'] ?: null,
             ]);
 
             Flux::modal('create-user-modal')->close();
@@ -211,6 +215,7 @@ new class extends Component
                 'department' => $this->form['department'],
                 'phone' => $this->form['phone'],
                 'category_id' => $this->form['category_id'] ?: null,
+                'employee_id' => $this->form['employee_id'] ?: null,
             ];
 
             if (!empty($this->form['password'])) {
@@ -450,6 +455,24 @@ new class extends Component
         ];
     }
 
+    public function getAvailableEmployees()
+    {
+        $query = \App\Models\Employee::query();
+        
+        // Si estamos editando un usuario, incluir su empleado actual
+        if ($this->selectedUser && $this->selectedUser->employee_id) {
+            $query->where(function($q) {
+                $q->whereDoesntHave('user')
+                  ->orWhere('id', $this->selectedUser->employee_id);
+            });
+        } else {
+            // Solo empleados sin usuario asignado
+            $query->whereDoesntHave('user');
+        }
+        
+        return $query->orderBy('name')->get();
+    }
+
     public function with(): array
     {
         $query = User::with(['roles', 'employee', 'category'])
@@ -478,6 +501,7 @@ new class extends Component
             'roles' => Role::orderBy('name')->get(),
             'departments' => $this->getDepartments(),
             'categories' => \App\Models\Category::orderBy('code')->get(),
+            'employees' => $this->getAvailableEmployees(),
         ];
     }
 }; ?>
@@ -729,6 +753,20 @@ new class extends Component
                         <flux:error name="form.category_id" />
                     </flux:field>
 
+                    <flux:field>
+                        <flux:label>Empleado Vinculado</flux:label>
+                        <flux:select wire:model="form.employee_id" placeholder="Seleccionar empleado">
+                            <flux:select.option value="">Sin empleado</flux:select.option>
+                            @foreach($employees as $employee)
+                                <flux:select.option value="{{ $employee->id }}">
+                                    {{ $employee->code }} - {{ $employee->name }}
+                                </flux:select.option>
+                            @endforeach
+                        </flux:select>
+                        <flux:error name="form.employee_id" />
+                        <flux:description>Se muestran solo empleados sin usuario asignado</flux:description>
+                    </flux:field>
+
                     <flux:field class="md:col-span-2">
                         <flux:label>Contraseña</flux:label>
                         <flux:input type="password" wire:model="form.password" placeholder="Mínimo 8 caracteres" />
@@ -812,6 +850,20 @@ new class extends Component
                         <flux:error name="form.category_id" />
                     </flux:field>
 
+                    @if($selectedUser && $selectedUser->employee_id)
+                        <flux:input label="Empleado Vinculado" value="{{ $selectedUser->employee->code }} - {{ $selectedUser->employee->name }}" />
+                    @else
+                    <flux:select label="Empleado Vinculado" wire:model="form.employee_id" placeholder="Seleccionar empleado" variant="listbox" searchable >
+                        <flux:select.option value="">Sin empleado</flux:select.option>
+                        @foreach($employees as $employee)
+                            <flux:select.option value="{{ $employee->id }}">
+                                {{ $employee->code }} - {{ $employee->name }}
+                            </flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    <flux:description>Se muestran empleados sin usuario asignado y el empleado actual (si existe)</flux:description>
+                        
+                    @endif
                     <flux:field class="md:col-span-2">
                         <flux:label>Nueva Contraseña</flux:label>
                         <flux:input type="password" wire:model="form.password" placeholder="Dejar vacío para no cambiar" />
