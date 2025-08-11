@@ -517,9 +517,11 @@ new class extends Component
             <flux:button icon="arrow-down-tray" wire:click="openImportModal">
                 Importar Categorías
             </flux:button>
-            <flux:button variant="primary" icon="plus" wire:click="openCreateModal">
-                {{ __('app.New User') }}
-            </flux:button>
+            @role('Super Admin')
+                <flux:button variant="primary" icon="plus" wire:click="openCreateModal">
+                    {{ __('app.New User') }}
+                </flux:button>
+            @endrole
         </div>
     </div>
 
@@ -658,19 +660,21 @@ new class extends Component
                                     <flux:menu.item icon="pencil" wire:click="openEditModal({{ $user->id }})">
                                         Editar
                                     </flux:menu.item>
-                                    <flux:menu.item icon="key" href="{{ route('users.assign-roles', $user->id) }}">
-                                        Asignar Roles
-                                    </flux:menu.item>
-                                    <flux:menu.separator />
-                                    @if($user->id !== auth()->id())
-                                        <flux:menu.item 
-                                            icon="trash" 
-                                            variant="danger"
-                                            wire:click="openDeleteModal({{ $user->id }})"
-                                        >
-                                            Eliminar
+                                    @role('Super Admin')
+                                        <flux:menu.item icon="key" href="{{ route('users.assign-roles', $user->id) }}">
+                                            Asignar Roles
                                         </flux:menu.item>
-                                    @endif
+                                        <flux:menu.separator />
+                                        @if($user->id !== auth()->id())
+                                            <flux:menu.item 
+                                                icon="trash" 
+                                                variant="danger"
+                                                wire:click="openDeleteModal({{ $user->id }})"
+                                            >
+                                                Eliminar
+                                            </flux:menu.item>
+                                        @endif
+                                    @endrole
                                 </flux:menu>
                             </flux:dropdown>
                         </flux:table.cell>
