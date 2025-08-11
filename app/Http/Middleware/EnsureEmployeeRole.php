@@ -31,7 +31,8 @@ class EnsureEmployeeRole
 
         // Verificar que el usuario tenga un registro de empleado asociado
         if (!$user->employee) {
-            return redirect()->route('login')->with('error', 'Tu cuenta no está asociada a un empleado');
+            // Si no tiene empleado asociado, redirigir al dashboard en lugar de login para evitar loop infinito
+            return redirect()->route('dashboard')->with('error', 'Tu cuenta no está asociada a un empleado. Contacta al administrador.');
         }
 
         return $next($request);
