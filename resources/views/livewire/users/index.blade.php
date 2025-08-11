@@ -476,7 +476,7 @@ new class extends Component
     public function with(): array
     {
         $query = User::with(['roles', 'employee', 'category'])
-            ->orderBy('name');
+            ->latest();
 
         if ($this->search) {
             $query->where(function($q) {
