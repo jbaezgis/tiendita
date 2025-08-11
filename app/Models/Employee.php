@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class Employee extends Model
 {
@@ -30,20 +31,23 @@ class Employee extends Model
 
     protected static function booted()
     {
-        // Sincronizar con User al crear
-        static::created(function ($employee) {
-            $employee->syncUser();
-        });
-
         // Sincronizar con User al actualizar
         static::updated(function ($employee) {
-            $employee->syncUser();
+            try {
+                $employee->syncUser();
+            } catch (\Exception $e) {
+                Log::error('Error syncing user for employee: ' . $e->getMessage());
+            }
         });
 
         // Actualizar User si cambia nombre o cédula
         static::updating(function ($employee) {
             if ($employee->isDirty(['name', 'cedula'])) {
-                $employee->syncUser();
+                try {
+                    $employee->syncUser();
+                } catch (\Exception $e) {
+                    Log::error('Error syncing user for employee: ' . $e->getMessage());
+                }
             }
         });
     }
@@ -75,22 +79,28 @@ class Employee extends Model
     {
         $user = $this->user;
         
+        // Limpiar cédula (remover guiones)
+        $cleanCedula = preg_replace('/[^0-9]/', '', $this->cedula);
+        
         if ($user) {
             $user->update([
                 'name' => $this->name,
-                'cedula' => $this->cedula,
+                'cedula' => $cleanCedula,
                 'category_id' => $this->category_id,
             ]);
         } else {
             // Crear usuario si no existe
-            $this->user()->create([
+            $newUser = $this->user()->create([
                 'name' => $this->name,
                 'email' => $this->generateEmail(),
-                'cedula' => $this->cedula,
+                'cedula' => $cleanCedula,
                 'password' => Hash::make('12345678'), // Password por defecto
                 'email_verified_at' => now(),
                 'category_id' => $this->category_id,
             ]);
+            
+            // Asignar rol de empleado automáticamente
+            $newUser->assignRole('empleado');
         }
     }
 
@@ -100,7 +110,7 @@ class Employee extends Model
     private function generateEmail()
     {
         $name = strtolower(str_replace(' ', '.', $this->name));
-        $cedula = str_replace('-', '', $this->cedula);
+        $cedula = preg_replace('/[^0-9]/', '', $this->cedula);
         return $name . '.' . $cedula . '@empresa.com';
     }
 

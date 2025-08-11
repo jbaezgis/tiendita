@@ -107,13 +107,25 @@ new #[Layout('components.layouts.app')] class extends Component {
                 position: 'top-right',
             );
         } else {
-            Employee::create($validated);
-            Flux::toast(
-                heading: 'Empleado creado',
-                text: 'El empleado ha sido creado exitosamente.',
-                variant: 'success',
-                position: 'top-right',
-            );
+            $employee = Employee::create($validated);
+            
+            // Forzar sincronización manual después de crear el empleado
+            try {
+                $employee->syncUser();
+                Flux::toast(
+                    heading: 'Empleado creado',
+                    text: 'El empleado ha sido creado exitosamente con usuario automático.',
+                    variant: 'success',
+                    position: 'top-right',
+                );
+            } catch (\Exception $e) {
+                Flux::toast(
+                    heading: 'Empleado creado',
+                    text: 'El empleado ha sido creado exitosamente, pero hubo un problema al crear el usuario.',
+                    variant: 'warning',
+                    position: 'top-right',
+                );
+            }
         }
 
         $this->closeModal();
