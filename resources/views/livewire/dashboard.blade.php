@@ -266,21 +266,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         </flux:callout>
     @endif
 
-    <!-- Employee Link Warning -->
-    @if(auth()->user()->hasRole(['empleado', 'supervisor']) && !auth()->user()->employee)
-        <flux:callout variant="warning" icon="exclamation-triangle">
-            <flux:callout.heading>Cuenta no vinculada a empleado</flux:callout.heading>
-            <flux:callout.text>
-                Tu cuenta tiene roles de empleado pero no está vinculada a un registro de empleado. 
-                Esto puede limitar algunas funcionalidades. Contacta al administrador para resolver esto.
-            </flux:callout.text>
-            <x-slot name="actions">
-                <flux:button href="{{ route('employees.index') }}" size="sm">
-                    Ver Empleados
-                </flux:button>
-            </x-slot>
-        </flux:callout>
-    @endif
+
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

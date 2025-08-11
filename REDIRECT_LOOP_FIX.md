@@ -1,97 +1,70 @@
-# Fix para Error de Redirección Infinita
+# Sistema de Redirección Simplificado
 
-## Problema Identificado
+## Lógica de Redirección Implementada
 
-Cuando se agregaba un nuevo usuario que no tenía un empleado vinculado, el sistema presentaba un error de redirección infinita:
+El sistema ahora utiliza una lógica de redirección simplificada basada únicamente en los roles del usuario, sin depender de la vinculación con empleados.
 
-```
-This page isn't working
-tienda.grupoajfa.com redirected you too many times.
-Try deleting your cookies.
-ERR_TOO_MANY_REDIRECTS
-```
+### Comportamiento por Roles:
 
-## Causa del Problema
-
-El problema se originaba en la siguiente secuencia:
-
-1. **Usuario se autentica** → Sistema redirige a `public.orders` (si tiene roles de empleado)
-2. **Middleware `EnsureEmployeeRole`** → Verifica si tiene empleado vinculado
-3. **Sin empleado vinculado** → Redirige a `login` (creando el loop infinito)
-4. **Usuario ya autenticado** → Sistema redirige de nuevo a `public.orders`
-5. **Loop infinito** → Continúa indefinidamente
+1. **Usuarios con rol de empleado**: Redirigidos automáticamente a la tienda (`public/orders`)
+2. **Usuarios con rol de admin + empleado**: Acceso al dashboard, pero también pueden acceder a la tienda
+3. **Usuarios solo con rol de admin**: Acceso completo al dashboard
+4. **Usuarios sin roles**: Acceso al dashboard pero sin acceso a la tienda
 
 ## Solución Implementada
 
-### 1. Modificación del Middleware `EnsureEmployeeRole`
-
-**Archivo:** `app/Http/Middleware/EnsureEmployeeRole.php`
-
-**Cambio:** Redirigir al dashboard en lugar de login cuando no hay empleado vinculado.
-
-```php
-// Antes
-if (!$user->employee) {
-    return redirect()->route('login')->with('error', 'Tu cuenta no está asociada a un empleado');
-}
-
-// Después
-if (!$user->employee) {
-    return redirect()->route('dashboard')->with('error', 'Tu cuenta no está asociada a un empleado. Contacta al administrador.');
-}
-```
-
-### 2. Comportamiento de Redirección por Roles
+### 1. Middleware `RedirectBasedOnRole` Simplificado
 
 **Archivo:** `app/Http/Middleware/RedirectBasedOnRole.php`
 
 **Lógica implementada:**
-- **Usuarios con rol de empleado + empleado vinculado**: Redirigidos a `public/orders` al intentar acceder al dashboard
-- **Usuarios con rol de admin**: Acceso completo al dashboard sin redirecciones
-- **Usuarios con roles múltiples**: Acceso completo a ambas áreas
-- **Usuarios sin empleado vinculado**: Acceso al dashboard con advertencia
-
-### 3. Mejora en la Lógica de Redirección de Login
-
-**Archivo:** `resources/views/livewire/auth/login.blade.php`
-
-**Cambio:** Verificar si el usuario tiene empleado vinculado antes de redirigir a `public.orders`.
-
 ```php
-// Antes
-} elseif ($user->hasRole('empleado') || $user->hasRole('supervisor')) {
-    $redirectUrl = route('public.orders');
+// Si el usuario tiene roles múltiples (admin + empleado), redirigir al dashboard
+if ($hasEmployeeRole && $hasAdminRole) {
+    if ($currentRoute === 'public.orders') {
+        return redirect()->route('dashboard');
+    }
+    return $next($request);
 }
 
-// Después
-} elseif (($user->hasRole('empleado') || $user->hasRole('supervisor')) && $user->employee) {
-    $redirectUrl = route('public.orders');
-} else {
-    $redirectUrl = route('dashboard');
-}
-```
-
-### 4. Optimización del Middleware `RedirectBasedOnRole`
-
-**Archivo:** `app/Http/Middleware/RedirectBasedOnRole.php`
-
-**Cambio:** Solo redirigir a `public.orders` si el usuario tiene empleado vinculado.
-
-```php
-// Antes
+// Si el usuario es solo empleado o supervisor, redirigir a la tienda
 if ($hasEmployeeRole && !$hasAdminRole && $currentRoute === 'dashboard') {
     return redirect()->route('public.orders');
 }
 
-// Después
-if ($hasEmployeeRole && !$hasAdminRole && $currentRoute === 'dashboard') {
-    if ($user->employee) {
-        return redirect()->route('public.orders');
-    }
+// Si el usuario es solo Super Admin o Admin y está intentando acceder a public/orders
+if ($hasAdminRole && !$hasEmployeeRole && $currentRoute === 'public.orders') {
+    return redirect()->route('dashboard');
 }
 ```
 
-### 5. Advertencia Visual en el Dashboard
+### 2. Middleware `EnsureEmployeeRole` Simplificado
+
+**Archivo:** `app/Http/Middleware/EnsureEmployeeRole.php`
+
+**Cambio:** Solo verificar rol, sin importar vinculación con empleado.
+
+```php
+// Solo verificar que el usuario tenga rol de empleado o supervisor
+if (!$user->hasRole(['empleado', 'supervisor'])) {
+    return redirect()->route('dashboard')->with('error', 'No tienes permisos para acceder a esta página. Solo empleados y supervisores pueden acceder.');
+}
+```
+
+### 3. Lógica de Redirección de Login Simplificada
+
+**Archivo:** `resources/views/livewire/auth/login.blade.php`
+
+**Cambio:** Redirigir basado únicamente en roles, sin verificar empleado vinculado.
+
+```php
+// Lógica simplificada
+if ($user->hasRole('Super Admin') || $user->hasRole('admin')) {
+    $redirectUrl = route('dashboard');
+} elseif ($user->hasRole('empleado') || $user->hasRole('supervisor')) {
+    $redirectUrl = route('public.orders');
+}
+```
 
 **Archivo:** `resources/views/livewire/dashboard.blade.php`
 
@@ -131,24 +104,25 @@ php artisan user:test-access
 
 ## Comportamiento Resultante
 
-### Usuarios con Empleado Vinculado
-- ✅ Redirección automática a `public.orders` al intentar acceder al dashboard
-- ✅ Acceso directo a `public.orders` desde el login
-- ✅ Funcionalidad completa del sistema
+### Usuarios con Rol de Empleado
+- ✅ Redirección automática a `public/orders` al intentar acceder al dashboard
+- ✅ Acceso directo a `public/orders` desde el login
+- ✅ Acceso completo a la funcionalidad de la tienda
 
-### Usuarios sin Empleado Vinculado
-- ✅ Acceso al dashboard (sin loop infinito)
-- ✅ Mensaje de advertencia visible
-- ✅ Posibilidad de vincular empleado posteriormente
-
-### Usuarios Administradores (Super Admin, Admin)
+### Usuarios con Rol de Admin
 - ✅ Acceso completo al dashboard
 - ✅ Sin redirecciones automáticas
-- ✅ Sin restricciones por falta de empleado
+- ✅ Acceso a todas las funcionalidades administrativas
 
 ### Usuarios con Roles Múltiples (empleado + admin)
-- ✅ Acceso completo a ambas áreas
-- ✅ Sin redirecciones automáticas
+- ✅ Acceso completo al dashboard (redirigido desde public/orders)
+- ✅ Posibilidad de acceder a la tienda desde el dashboard
+- ✅ Acceso completo a ambas áreas del sistema
+
+### Usuarios sin Roles
+- ✅ Acceso al dashboard
+- ✅ Sin acceso a la tienda
+- ✅ Funcionalidad limitada
 
 ## Archivos Modificados
 
@@ -162,15 +136,15 @@ php artisan user:test-access
 
 ## Beneficios
 
-1. **Eliminación del loop infinito** - Los usuarios pueden acceder al sistema sin problemas
-2. **Experiencia de usuario mejorada** - Mensajes claros sobre el estado de la cuenta
-3. **Herramientas administrativas** - Comandos para gestionar vinculaciones
-4. **Flexibilidad** - Los usuarios pueden tener roles sin empleado vinculado
-5. **Seguridad mantenida** - Las restricciones apropiadas siguen aplicándose
+1. **Lógica simplificada** - Redirección basada únicamente en roles, sin dependencias complejas
+2. **Experiencia de usuario mejorada** - Comportamiento predecible y consistente
+3. **Flexibilidad** - Los usuarios con roles múltiples pueden acceder a ambas áreas
+4. **Seguridad mantenida** - Las restricciones apropiadas siguen aplicándose
+5. **Mantenimiento simplificado** - Menos complejidad en la lógica de redirección
 
 ## Próximos Pasos Recomendados
 
-1. **Revisar usuarios existentes** - Usar el comando de listado para identificar cuentas problemáticas
-2. **Vincular empleados** - Usar el comando de vinculación para resolver casos específicos
-3. **Proceso de creación** - Considerar automatizar la vinculación en el proceso de creación de usuarios
-4. **Documentación** - Actualizar manuales de usuario sobre el proceso de vinculación 
+1. **Probar el sistema** - Verificar que todos los tipos de usuario funcionen correctamente
+2. **Documentación de usuarios** - Actualizar manuales con la nueva lógica de redirección
+3. **Monitoreo** - Observar el comportamiento en producción para confirmar que funciona como esperado
+4. **Optimización** - Considerar mejoras adicionales basadas en el feedback de usuarios 

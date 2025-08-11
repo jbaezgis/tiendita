@@ -53,21 +53,19 @@ class TestUserAccess extends Command
             $hasEmployeeRole = $user->hasRole(['empleado', 'supervisor']);
             $hasAdminRole = $user->hasRole(['Super Admin', 'admin']);
             
-            if ($hasAdminRole) {
+            if ($hasAdminRole && $hasEmployeeRole) {
+                $dashboardAccess = '✅ Completo (Admin + Empleado)';
+            } elseif ($hasAdminRole) {
                 $dashboardAccess = '✅ Completo (Admin)';
-            } elseif ($hasEmployeeRole && $user->employee) {
+            } elseif ($hasEmployeeRole) {
                 $dashboardAccess = '❌ Redirigido a public/orders';
-            } elseif ($hasEmployeeRole && !$user->employee) {
-                $dashboardAccess = '✅ Completo (Sin empleado)';
             } else {
                 $dashboardAccess = '✅ Completo';
             }
             
             // Determine public orders access
-            if ($hasEmployeeRole && $user->employee) {
+            if ($hasEmployeeRole) {
                 $publicOrdersAccess = '✅ Completo';
-            } elseif ($hasEmployeeRole && !$user->employee) {
-                $publicOrdersAccess = '❌ Bloqueado (Sin empleado)';
             } elseif ($hasAdminRole) {
                 $publicOrdersAccess = '❌ Redirigido a dashboard';
             } else {
@@ -77,7 +75,7 @@ class TestUserAccess extends Command
             // Determine login redirect
             if ($hasAdminRole) {
                 $loginRedirect = 'Dashboard';
-            } elseif ($hasEmployeeRole && $user->employee) {
+            } elseif ($hasEmployeeRole) {
                 $loginRedirect = 'Public Orders';
             } else {
                 $loginRedirect = 'Dashboard';

@@ -29,12 +29,6 @@ class EnsureEmployeeRole
             return redirect()->route('dashboard')->with('error', 'No tienes permisos para acceder a esta página. Solo empleados y supervisores pueden acceder.');
         }
 
-        // Verificar que el usuario tenga un registro de empleado asociado
-        if (!$user->employee) {
-            // Si no tiene empleado asociado, redirigir al dashboard en lugar de login para evitar loop infinito
-            return redirect()->route('dashboard')->with('error', 'Tu cuenta no está asociada a un empleado. Contacta al administrador.');
-        }
-
         return $next($request);
     }
 } 

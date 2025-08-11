@@ -67,14 +67,10 @@ new #[Layout('components.layouts.auth')] class extends Component {
             if ($user->hasRole('Super Admin') || $user->hasRole('admin')) {
                 $redirectUrl = route('dashboard');
                 \Log::info('User has Super Admin/Admin role, redirecting to dashboard');
-            } elseif (($user->hasRole('empleado') || $user->hasRole('supervisor')) && $user->employee) {
-                // Solo redirigir a public.orders si tiene empleado vinculado
+            } elseif ($user->hasRole('empleado') || $user->hasRole('supervisor')) {
+                // Usuarios con rol de empleado van a la tienda
                 $redirectUrl = route('public.orders');
-                \Log::info('User has empleado/supervisor role and employee linked, redirecting to public/orders');
-            } else {
-                // Si tiene roles de empleado pero no tiene empleado vinculado, ir al dashboard
-                $redirectUrl = route('dashboard');
-                \Log::info('User has empleado/supervisor role but no employee linked, redirecting to dashboard');
+                \Log::info('User has empleado/supervisor role, redirecting to public/orders');
             }
             
             \Log::info('Using JavaScript redirect to: ' . $redirectUrl);
