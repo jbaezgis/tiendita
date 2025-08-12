@@ -43,6 +43,9 @@ Route::middleware(['auth'])->group(function () {
         
         // Store Configuration routes
         Volt::route('store-config', 'store-config.index')->name('store-config.index');
+        
+        // Reports routes
+        Volt::route('reports/products-sales', 'reports.products-sales')->name('reports.products-sales');
     });
     
     // Public Orders routes (for employees and supervisors) - con middleware de redirección y verificación
