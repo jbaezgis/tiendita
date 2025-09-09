@@ -3,6 +3,7 @@
 use App\Models\Product;
 use App\Models\Employee;
 use App\Models\Category;
+use App\Models\ProductCategory;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\StoreConfig;
@@ -10,15 +11,18 @@ use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 use Flux\Flux;
+use Carbon\Carbon;
 
 new #[Layout('components.layouts.app')] class extends Component {
     use WithPagination;
 
     protected $queryString = [
         'search' => ['except' => ''],
+        'categoryFilter' => ['except' => ''],
     ];
 
     public $search = '';
+    public $categoryFilter = '';
     public $perPage = 12;
     
     // Order form
@@ -48,6 +52,11 @@ new #[Layout('components.layouts.app')] class extends Component {
     }
 
     public function updatedSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedCategoryFilter()
     {
         $this->resetPage();
     }
@@ -243,7 +252,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $order = Order::create([
             'employee_id' => $this->employee_id,
             'category_id' => $employee->category_id,
-            'order_date' => $this->order_date,
+            'order_date' => Carbon::parse($this->order_date)->toDateString(),
             'subtotal' => $subtotal,
             'total' => $total,
             'priority' => $this->priority,
@@ -282,6 +291,10 @@ new #[Layout('components.layouts.app')] class extends Component {
             $query->where('description', 'like', "%{$this->search}%")
                 ->orWhere('code', 'like', "%{$this->search}%");
         });
+
+        $query->when($this->categoryFilter, function ($query) {
+            $query->where('product_category_id', $this->categoryFilter);
+        });
         
         return $query->orderBy('description')->paginate($this->perPage);
     }
@@ -304,6 +317,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 }])
                 ->orderBy('name')
                 ->get(),
+            'productCategories' => ProductCategory::where('is_active', true)->orderBy('name')->get(),
         ];
     }
 }; ?>
@@ -338,67 +352,20 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     <flux:separator class="mt-4 mb-6"/>
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <div class=" grid-cols-1 lg:grid-cols-4 gap-6">
         <!-- Order Form -->
         <div class="lg:col-span-1">
-            <flux:card>
+            <flux:card class="mb-4">
                 <flux:heading size="lg" class="mb-4">Información del Pedido</flux:heading>
                 
                 <div class="space-y-4">
-                    <flux:select wire:model.live="employee_id" placeholder="Seleccionar empleado" label="Empleado">
+                    <flux:select variant="listbox" wire:model.live="employee_id" placeholder="Seleccionar empleado" label="Empleado" searchable>
                         @foreach($employees as $employee)
                             <flux:select.option value="{{ $employee->id }}">
                                 {{ $employee->name }} - {{ $employee->department }}
                             </flux:select.option>
                         @endforeach
                     </flux:select>
-                    @error('employee_id') 
-                        <flux:error>{{ $message }}</flux:error>
-                    @enderror
-
-                    @if($employeesWithPendingOrders->count() > 0)
-                        <div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                            <div class="flex items-start gap-2">
-                                <flux:icon.information-circle class="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                                <div class="flex-1 min-w-0">
-                                    <flux:text size="sm" class="font-medium text-yellow-800">
-                                        Empleados con pedidos pendientes/aprobados:
-                                    </flux:text>
-                                    <div class="mt-1 space-y-1">
-                                        @foreach($employeesWithPendingOrders as $employee)
-                                            <div class="flex items-center justify-between">
-                                                <flux:text size="xs" class="text-yellow-700">
-                                                    {{ $employee->name }}
-                                                </flux:text>
-                                                <flux:badge :color="$employee->orders->first()->getStatusColor()" size="xs">
-                                                    {{ $employee->orders->first()::getStatusOptions()[$employee->orders->first()->status] }}
-                                                </flux:badge>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
-                    <flux:input 
-                        wire:model="order_date" 
-                        type="date" 
-                        label="Fecha del pedido"
-                    />
-                    @error('order_date') 
-                        <flux:error>{{ $message }}</flux:error>
-                    @enderror
-
-                    <flux:select wire:model="priority" label="Prioridad" placeholder="Selecciona la prioridad">
-                        <flux:select.option value="low">Baja</flux:select.option>
-                        <flux:select.option value="medium">Media</flux:select.option>
-                        <flux:select.option value="high">Alta</flux:select.option>
-                        <flux:select.option value="urgent">Urgente</flux:select.option>
-                    </flux:select>
-                    @error('priority') 
-                        <flux:error>{{ $message }}</flux:error>
-                    @enderror
 
                     <flux:textarea 
                         wire:model="notes" 
@@ -406,9 +373,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         placeholder="Agrega cualquier información adicional..."
                         rows="3"
                     />
-                    @error('notes') 
-                        <flux:error>{{ $message }}</flux:error>
-                    @enderror
+                    
 
                     @if(!empty($cart))
                         <div class="pt-4 border-t">
@@ -427,13 +392,13 @@ new #[Layout('components.layouts.app')] class extends Component {
                                             </flux:text>
                                             <div class="flex items-center gap-2 mt-1">
                                                 <flux:text size="xs" class="text-gray-500">
-                                                    {{ $item['quantity'] }} × ${{ number_format($item['price'], 2) }}
+                                                    {{ $item['quantity'] }} × RD$ {{ number_format($item['price'], 2) }}
                                                 </flux:text>
                                             </div>
                                         </div>
                                         <div class="text-right ml-2">
                                             <flux:text size="sm" class="font-bold text-green-600">
-                                                ${{ number_format($item['subtotal'], 2) }}
+                                                RD$ {{ number_format($item['subtotal'], 2) }}
                                             </flux:text>
                                         </div>
                                     </div>
@@ -445,7 +410,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 <div class="flex justify-between items-center">
                                     <flux:text class="font-bold">Total del Pedido:</flux:text>
                                     <flux:text class="font-bold text-xl text-green-600">
-                                        ${{ number_format($this->cartTotal, 2) }}
+                                        RD$ {{ number_format($this->cartTotal, 2) }}
                                     </flux:text>
                                 </div>
                                 <flux:text size="sm" class="text-gray-500">
@@ -469,64 +434,111 @@ new #[Layout('components.layouts.app')] class extends Component {
 
         <!-- Products Grid -->
         <div class="lg:col-span-3">
-            <!-- Search -->
+            <!-- Search and Filters -->
             <flux:card class="mb-6">
                 <div class="flex items-center justify-between mb-4">
                     <flux:heading size="lg">Productos Disponibles</flux:heading>
                     <flux:text size="sm" class="text-gray-500">{{ $this->products->total() }} producto(s)</flux:text>
                 </div>
-                <flux:input 
-                    wire:model.live="search" 
-                    icon="magnifying-glass" 
-                    placeholder="Buscar productos..." 
-                    label="Buscar"
-                />
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <flux:input 
+                        wire:model.live="search" 
+                        icon="magnifying-glass" 
+                        placeholder="Buscar productos..." 
+                        label="Buscar"
+                    />
+                    <flux:select wire:model.live="categoryFilter" placeholder="Todas las categorías" label="Filtrar por categoría" variant="listbox" searchable>
+                        <flux:select.option value="">Todas las categorías</flux:select.option>
+                        @foreach($productCategories as $category)
+                            <flux:select.option value="{{ $category->id }}">{{ $category->name }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                </div>
             </flux:card>
 
             <!-- Products Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
+            <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 mb-8">
                 @foreach ($this->products as $product)
-                    <flux:card class="flex flex-col h-full">
+                    <div class="flex flex-col h-full rounded-lg border {{ isset($cart[$product->id]) ? 'border-2 border-blue-500 shadow-sm' : 'border-gray-200' }} bg-white overflow-hidden relative">
+                        
+                        @if(isset($cart[$product->id]))
+                            <div class="absolute top-2 right-2 z-10">
+                                <flux:button 
+                                    size="xs" 
+                                    icon="trash" 
+                                    variant="danger"
+                                    wire:click.stop="removeFromCart({{ $product->id }})"
+                                    class="w-8 h-8 p-0 shadow-sm"
+                                />
+                            </div>
+                        @endif
+                        
                         <div class="flex-1">
-                            <div class="aspect-square bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
-                                <flux:icon.cube class="h-12 w-12 text-gray-400" />
+                            <div class="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden relative">
+                                @if($product->getFirstMediaUrl('images'))
+                                    <img src="{{ $product->getFirstMediaUrl('images') }}" 
+                                         alt="{{ $product->description }}" 
+                                         class="w-full h-full object-cover">
+                                @else
+                                    <flux:icon.cube class="h-12 w-12 text-gray-400" />
+                                @endif
+
+                                <div class="absolute bottom-2 left-2 z-10">
+                                    @if($product->productCategory && $product->productCategory->name == 'Cuadernos')
+                                        <flux:badge variant="solid" color="blue" size="sm">
+                                            El diseño puede variar.
+                                        </flux:badge>
+                                    @endif
+                                </div>
                             </div>
                             
-                            <flux:text class="font-medium text-base mb-2">{{ $product->description }}</flux:text>
-                            <flux:text size="sm" class="text-gray-600 mb-2">Código: {{ $product->code }}</flux:text>
-                            
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <flux:icon.currency-dollar class="h-4 w-4 text-green-600" />
-                                    <flux:text class="font-bold text-lg text-green-600">
-                                        ${{ number_format($product->price, 2) }}
+                            <div class="p-3">
+                                <flux:text class="font-medium mb-2 text-sm sm:text-base">{{ $product->description }}</flux:text>
+                                
+                                <div class="text-right mb-3">
+                                    <flux:text class="font-bold text-lg text-blue-600">
+                                        RD$ {{ number_format($product->price, 2) }}
                                     </flux:text>
+                                </div>
+
+                                <!-- Quantity Controls -->
+                                <div class="">
+                                    @if(isset($cart[$product->id]))
+                                        <div class="flex justify-between items-center gap-2">
+                                            <flux:button 
+                                                size="xs" 
+                                                icon="minus" 
+                                                variant="ghost"
+                                                wire:click.stop="updateCartQuantity({{ $product->id }}, {{ $cart[$product->id]['quantity'] - 1 }})"
+                                                class="w-8 h-8 p-0"
+                                            />
+                                            <flux:text class="font-medium text-sm min-w-[2rem] text-center">
+                                                {{ $cart[$product->id]['quantity'] }}
+                                            </flux:text>
+                                            <flux:button 
+                                                size="xs" 
+                                                icon="plus" 
+                                                variant="ghost"
+                                                wire:click.stop="updateCartQuantity({{ $product->id }}, {{ $cart[$product->id]['quantity'] + 1 }})"
+                                                class="w-8 h-8 p-0"
+                                            />
+                                        </div>
+                                        
+                                    @else
+                                        <flux:button 
+                                            size="sm" 
+                                            icon="plus" 
+                                            variant="primary"
+                                            wire:click.stop="addToCartWithQuantity({{ $product->id }})"
+                                            class="flex-1 w-full"
+                                        >
+                                            Agregar
+                                        </flux:button>
+                                    @endif
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="mt-4 pt-4 border-t">
-                            <div class="flex items-center gap-2">
-                                <flux:input 
-                                    type="number" 
-                                    min="1" 
-                                    value="1" 
-                                    size="sm"
-                                    class="w-16"
-                                    wire:model="productQuantities.{{ $product->id }}"
-                                />
-                                <flux:button 
-                                    variant="primary" 
-                                    size="sm" 
-                                    icon="plus"
-                                    class="flex-1"
-                                    wire:click="addToCartWithQuantity({{ $product->id }})"
-                                >
-                                    Agregar
-                                </flux:button>
-                            </div>
-                        </div>
-                    </flux:card>
+                    </div>
                 @endforeach
             </div>
 
@@ -539,52 +551,69 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     <!-- Cart Modal Flyout -->
     <flux:modal name="cart-modal" variant="flyout" wire:model="showCart">
-        <div class="h-full flex flex-col">
+        <div class="space-y-6">
             <!-- Cart Header -->
-            <div class="flex items-center justify-between p-4 border-b">
+            <div class="flex items-center justify-between">
                 <flux:heading size="lg">Carrito de Compras</flux:heading>
-                <flux:button variant="ghost" size="sm" wire:click="toggleCart">
-                    ×
-                </flux:button>
             </div>
 
             <!-- Cart Items -->
-            <div class="flex-1 overflow-y-auto p-4">
+            <div class="max-h-96 overflow-y-auto">
                 @if(empty($cart))
                     <div class="text-center py-8">
                         <flux:icon.shopping-cart class="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <flux:text class="text-gray-500">El carrito está vacío</flux:text>
+                        <flux:text class="text-gray-500">Tu carrito está vacío</flux:text>
                         <flux:text size="sm" class="text-gray-400 block">Agrega productos para comenzar</flux:text>
                     </div>
                 @else
-                    <div class="space-y-4">
+                    <div class="space-y-3">
                         @foreach($cart as $productId => $item)
-                            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                                <div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                                    <flux:icon.cube class="h-6 w-6 text-gray-500" />
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                <!-- Product Info -->
+                                <div class="flex items-center gap-3 flex-1">
+                                    <div class="w-12 h-12 rounded-lg flex items-center justify-center bg-white">
+                                        @if($item['product']->getFirstMediaUrl('images'))
+                                            <flux:avatar circle src="{{ $item['product']->getFirstMediaUrl('images') }}" alt="{{ $item['product']->description }}"/>
+                                        @else
+                                            <flux:icon.cube class="h-8 w-8 text-gray-400" />
+                                        @endif
+                                    </div>
+                                    
+                                    <div class="flex-1 min-w-0">
+                                        <flux:text class="font-medium truncate text-sm sm:text-base">{{ $item['product']->description }}</flux:text>
+                                        <flux:text size="sm" class="text-gray-600">RD$ {{ number_format($item['price'], 2) }}</flux:text>
+                                        <flux:text size="xs" class="text-gray-500">Subtotal: RD$ {{ number_format($item['subtotal'], 2) }}</flux:text>
+                                    </div>
                                 </div>
                                 
-                                <div class="flex-1 min-w-0">
-                                    <flux:text class="font-medium truncate">{{ $item['product']->description }}</flux:text>
-                                    <flux:text size="sm" class="text-gray-600">${{ number_format($item['price'], 2) }}</flux:text>
-                                </div>
-                                
-                                <div class="flex items-center gap-2">
-                                    <flux:input 
-                                        type="number" 
-                                        min="1" 
-                                        value="{{ $item['quantity'] }}"
-                                        size="sm"
-                                        class="w-16"
-                                        wire:change="updateCartQuantity({{ $productId }}, $event.target.value)"
-                                    />
+                                <!-- Quantity Controls -->
+                                <div class="flex items-center justify-between sm:justify-end gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <flux:button 
+                                            size="xs" 
+                                            icon="minus" 
+                                            variant="ghost"
+                                            wire:click="updateCartQuantity({{ $productId }}, {{ $item['quantity'] - 1 }})"
+                                            class="w-8 h-8 p-0"
+                                        />
+                                        <flux:text class="font-medium text-sm min-w-[2rem] text-center">
+                                            {{ $item['quantity'] }}
+                                        </flux:text>
+                                        <flux:button 
+                                            size="xs" 
+                                            icon="plus" 
+                                            variant="ghost"
+                                            wire:click="updateCartQuantity({{ $productId }}, {{ $item['quantity'] + 1 }})"
+                                            class="w-8 h-8 p-0"
+                                        />
+                                    </div>
                                     <flux:button 
-                                        variant="ghost" 
-                                        size="sm"
+                                        variant="danger" 
+                                        icon="trash"
+                                        size="xs"
                                         wire:click="removeFromCart({{ $productId }})"
-                                    >
-                                        🗑️
-                                    </flux:button>
+                                        class="w-8 h-8 p-0"
+                                    />
                                 </div>
                             </div>
                         @endforeach
@@ -594,16 +623,19 @@ new #[Layout('components.layouts.app')] class extends Component {
 
             <!-- Cart Footer -->
             @if(!empty($cart))
-                <div class="border-t p-4 space-y-4">
-                    <div class="flex justify-between items-center">
-                        <flux:text class="font-bold text-lg">Total:</flux:text>
+                <div class="border-t pt-4 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                        <div>
+                            <flux:text class="font-bold text-lg">Total:</flux:text>
+                            <flux:text size="sm" class="text-gray-600">{{ $this->cartCount }} productos</flux:text>
+                        </div>
                         <flux:text class="font-bold text-xl text-green-600">
-                            ${{ number_format($this->cartTotal, 2) }}
+                            RD$ {{ number_format($this->cartTotal, 2) }}
                         </flux:text>
                     </div>
                     
-                    <div class="space-y-2">
-                        <flux:button variant="ghost" class="w-full" wire:click="clearCart">
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <flux:button variant="ghost" class="flex-1 sm:flex-none" wire:click="clearCart">
                             Vaciar Carrito
                         </flux:button>
                     </div>
