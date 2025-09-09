@@ -23,8 +23,8 @@ class EnsureEmployeeRole
 
         $user = Auth::user();
 
-        // Verificar que el usuario tenga rol de empleado o supervisor
-        if (!$user->hasRole(['empleado', 'supervisor'])) {
+        // Verificar que el usuario tenga rol de empleado o admin
+        if (!$user->hasRole(['empleado', 'admin'])) {
             // Si no es empleado ni supervisor, redirigir al dashboard
             return redirect()->route('dashboard')->with('error', 'No tienes permisos para acceder a esta página. Solo empleados y supervisores pueden acceder.');
         }

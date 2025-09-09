@@ -55,7 +55,7 @@ class AssignMultipleRoles extends Command
         $this->info("Final roles: " . implode(', ', $finalRoles));
         
         // Test the role access logic
-        $hasEmployeeRole = $user->hasRole(['empleado', 'supervisor']);
+        $hasEmployeeRole = $user->hasRole(['empleado', 'admin']);
         $hasAdminRole = $user->hasRole(['Super Admin', 'admin']);
         
         $this->info("Has employee role: " . ($hasEmployeeRole ? 'Yes' : 'No'));

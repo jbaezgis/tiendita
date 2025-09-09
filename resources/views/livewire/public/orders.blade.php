@@ -375,7 +375,7 @@ new #[Layout('components.layouts.public')] class extends Component {
 
         // Check if user has pending orders
         $pendingOrders = Order::where('employee_id', $this->employee->id)
-            ->whereIn('status', ['pending', 'approved'])
+            ->whereIn('status', ['pending'])
             ->count();
 
         if ($pendingOrders > 0) {
