@@ -710,7 +710,7 @@ new #[Layout('components.layouts.public')] class extends Component {
                     $user = auth()->user();
                     $purchaseLimit = $user->category ? $user->category->purchase_limit : null;
                     $pendingOrders = \App\Models\Order::where('employee_id', $this->employee->id)
-                        ->whereIn('status', ['pending', 'approved'])
+                        ->whereIn('status', ['pending'])
                         ->count();
                     $canCreateOrder = $pendingOrders === 0 && (!$purchaseLimit || $this->cartTotal <= $purchaseLimit);
                 @endphp
