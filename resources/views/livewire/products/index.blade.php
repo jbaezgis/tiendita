@@ -255,9 +255,9 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <flux:table.cell>${{ number_format($item->price, 2) }}</flux:table.cell>
                     <flux:table.cell>
                         @if($item->is_active)
-                            <flux:badge variant="success">Activo</flux:badge>
+                            <flux:badge color="green">Activo</flux:badge>
                         @else
-                            <flux:badge variant="danger">Inactivo</flux:badge>
+                            <flux:badge color="red">Inactivo</flux:badge>
                         @endif
                     </flux:table.cell>
                     <flux:table.cell>
