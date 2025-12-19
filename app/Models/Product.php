@@ -16,10 +16,12 @@ class Product extends Model implements HasMedia
         'description',
         'price',
         'product_category_id',
+        'is_active',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
+        'is_active' => 'boolean',
     ];
 
     public function category()

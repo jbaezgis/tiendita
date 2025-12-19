@@ -151,6 +151,19 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->productToDelete = null;
     }
 
+    public function toggleIsActive(Product $product)
+    {
+        $product->update(['is_active' => !$product->is_active]);
+        
+        $status = $product->is_active ? 'activado' : 'inactivado';
+        Flux::toast(
+            heading: 'Producto ' . $status,
+            text: "El producto ha sido {$status} exitosamente.",
+            variant: 'success',
+            position: 'top-right',
+        );
+    }
+
     public function getProductsProperty()
     {
         $query = Product::query();
@@ -212,6 +225,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             <flux:table.column>{{ __('app.Description') }}</flux:table.column>
             <flux:table.column>Categoría</flux:table.column>
             <flux:table.column sortable :sorted="$sortBy === 'price'" :direction="$sortDirection" wire:click="sort('price')">{{ __('app.Price') }}</flux:table.column>
+            <flux:table.column>Estado</flux:table.column>
             <flux:table.column></flux:table.column>
         </flux:table.columns>
 
@@ -240,6 +254,21 @@ new #[Layout('components.layouts.app')] class extends Component {
                     </flux:table.cell>
                     <flux:table.cell>${{ number_format($item->price, 2) }}</flux:table.cell>
                     <flux:table.cell>
+                        @if($item->is_active)
+                            <flux:badge variant="success">Activo</flux:badge>
+                        @else
+                            <flux:badge variant="danger">Inactivo</flux:badge>
+                        @endif
+                    </flux:table.cell>
+                    <flux:table.cell>
+                        <flux:button 
+                            size="sm" 
+                            :icon="$item->is_active ? 'eye-slash' : 'eye'" 
+                            variant="primary"
+                            :color="$item->is_active ? 'yellow' : 'green'"
+                            wire:click="toggleIsActive({{ $item->id }})"
+                            :tooltip="$item->is_active ? 'Inactivar producto' : 'Activar producto'"
+                        />
                         <flux:button size="sm" icon="pencil" wire:click="edit({{ $item->id }})" />
                         <flux:button size="sm" icon="trash" variant="danger" wire:click="openDeleteModal({{ $item->id }})" />
                     </flux:table.cell>

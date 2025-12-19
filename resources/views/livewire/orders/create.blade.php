@@ -285,7 +285,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function getProductsProperty()
     {
-        $query = Product::query();
+        $query = Product::query()->where('is_active', true);
         
         $query->when($this->search, function ($query) {
             $query->where('description', 'like', "%{$this->search}%")
