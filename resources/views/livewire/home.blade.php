@@ -14,8 +14,8 @@ new #[Layout('components.layouts.public')] class extends Component {
       <nav aria-label="Global" class="flex items-center justify-between p-6 lg:px-8">
         <div class="flex lg:flex-1">
           <a href="#" class="-m-1.5 p-1.5">
-            <span class="sr-only">Grupo AJFA</span>
-            <img src="{{ asset('images/logo.png') }}" alt="" class="h-12 w-auto" />
+            <span class="sr-only">Valora Brands</span>
+            <img src="{{ asset('images/logo.svg') }}" alt="" class="h-12 w-auto" />
           </a>
         </div>
         <div class="flex lg:hidden">
@@ -37,8 +37,8 @@ new #[Layout('components.layouts.public')] class extends Component {
             <el-dialog-panel class="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white p-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
               <div class="flex items-center justify-between">
                 <a href="#" class="-m-1.5 p-1.5">
-                  <span class="sr-only">Grupo AJFA</span>
-                  <img src="{{ asset('images/logo.png') }}" alt="" class="h-8 w-auto" />
+                  <span class="sr-only">Valora Brands</span>
+                  <img src="{{ asset('images/logo.svg') }}" alt="" class="h-8 w-auto" />
                 </a>
                 <button type="button" command="close" commandfor="mobile-menu" class="-m-2.5 rounded-md p-2.5 text-gray-700">
                   <span class="sr-only">Close menu</span>
@@ -82,18 +82,18 @@ new #[Layout('components.layouts.public')] class extends Component {
           <div class="text-center">
             <!-- Title -->
             <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl lg:text-7xl">
-              <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Tiendita AJFA
+              <span class="bg-gradient-to-r from-blue-800 to-indigo-900 bg-clip-text text-transparent">
+                Tienda Valora Brands
               </span>
             </h1>
             <div class="text-xl font-bold bg-gradient-to-r from-sky-600 to-indigo-800 bg-clip-text text-transparent">
-              Tienda de productos de Grupo AJFA
+              Tienda de productos de Valora Brands
             </div>
             
             <!-- Subtitle -->
             <p class="mt-6 text-xl text-gray-600 sm:text-2xl max-w-3xl mx-auto leading-relaxed">
               Bienvenido a la tienda exclusiva de útiles escolares para integrantes de 
-              <span class="font-semibold text-gray-900">Grupo AJFA</span>. 
+              <span class="font-semibold text-gray-900">Valora Brands</span>. 
               Encuentra todo lo que necesitas para el éxito académico de tus hijos.
             </p>
             
@@ -144,7 +144,7 @@ new #[Layout('components.layouts.public')] class extends Component {
                   </svg>
                 </div>
                 <h3 class="font-bold text-gray-900 text-lg mb-2">Precios Especiales</h3>
-                <p class="text-gray-600 text-center">Descuentos exclusivos para empleados de Grupo AJFA</p>
+                <p class="text-gray-600 text-center">Descuentos exclusivos para empleados de Valora Brands</p>
               </div>
               
               <div class="flex flex-col items-center p-6 bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50">
@@ -163,7 +163,7 @@ new #[Layout('components.layouts.public')] class extends Component {
         <!-- Additional Info -->
         <div class="mt-16 p-8 bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50 max-w-4xl mx-auto">
           <p class="text-gray-700 text-center">
-            <span class="font-semibold text-lg">¿Eres empleado de Grupo AJFA?</span><br>
+            <span class="font-semibold text-lg">¿Eres empleado de Valora Brands?</span><br>
             <span class="text-base">Accede con tu credencial para disfrutar de precios especiales y descuentos exclusivos en útiles escolares de alta calidad.</span>
           </p>
         </div>

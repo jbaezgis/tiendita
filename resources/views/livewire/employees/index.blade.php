@@ -7,6 +7,8 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use Livewire\Volt\Component;
 use Flux\Flux;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\EmployeesExport;
 
 new #[Layout('components.layouts.app')] class extends Component {
     use WithPagination;
@@ -216,6 +218,20 @@ new #[Layout('components.layouts.app')] class extends Component {
         return $query->paginate($this->perPage);
     }
 
+    public function export()
+    {
+        return Excel::download(
+            new EmployeesExport(
+                $this->search,
+                $this->departmentFilter,
+                $this->statusFilter,
+                $this->sortBy,
+                $this->sortDirection
+            ),
+            'empleados-' . now()->format('d-m-Y h:i a') . '.xlsx'
+        );
+    }
+
     public function with(): array
     {
         return [
@@ -234,6 +250,8 @@ new #[Layout('components.layouts.app')] class extends Component {
         </div>
         <div class="flex gap-2">
             <flux:button icon="plus" wire:click="openModal" variant="primary" size="sm">{{ __('app.Add Employee') }}</flux:button>
+            <flux:separator vertical />
+            <flux:button wire:click="export" icon="document-arrow-down" variant="outline" size="sm">{{ __('app.Export Excel') }}</flux:button>
         </div>
     </div>
 
