@@ -6,12 +6,17 @@ use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use Livewire\Volt\Component;
+use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Flux\Flux;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\EmployeesExport;
+use App\Services\EmployeeImportService;
 
 new #[Layout('components.layouts.app')] class extends Component {
     use WithPagination;
+    use WithFileUploads;
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -45,6 +50,21 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public $category_id = '';
     public $active = true;
+
+    // --- Importación de integrantes desde Excel ---
+    public $importFile;
+    public $importing = false;
+    public $importFinished = false;
+    public $importToken = null;
+    public $importTotal = 0;
+    public $importProcessed = 0;
+    public $importCreated = 0;
+    public $importSkipped = 0;
+    public $importInvalid = 0;
+    public $importUsers = 0;
+    public $importError = null;
+    public $importChunkSize = 20;
+    public $importMissingCategories = [];
 
     public function updatedSearch()
     {
@@ -103,27 +123,27 @@ new #[Layout('components.layouts.app')] class extends Component {
         if ($this->editingEmployee) {
             $this->editingEmployee->update($validated);
             Flux::toast(
-                heading: 'Empleado actualizado',
-                text: 'El empleado ha sido actualizado exitosamente.',
+                heading: 'Integrante actualizado',
+                text: 'El integrante ha sido actualizado exitosamente.',
                 variant: 'success',
                 position: 'top-right',
             );
         } else {
             $employee = Employee::create($validated);
             
-            // Forzar sincronización manual después de crear el empleado
+            // Forzar sincronización manual después de crear el integrante
             try {
                 $employee->syncUser();
                 Flux::toast(
-                    heading: 'Empleado creado',
-                    text: 'El empleado ha sido creado exitosamente con usuario automático.',
+                    heading: 'Integrante creado',
+                    text: 'El integrante ha sido creado exitosamente con usuario automático.',
                     variant: 'success',
                     position: 'top-right',
                 );
             } catch (\Exception $e) {
                 Flux::toast(
-                    heading: 'Empleado creado',
-                    text: 'El empleado ha sido creado exitosamente, pero hubo un problema al crear el usuario.',
+                    heading: 'Integrante creado',
+                    text: 'El integrante ha sido creado exitosamente, pero hubo un problema al crear el usuario.',
                     variant: 'warning',
                     position: 'top-right',
                 );
@@ -150,8 +170,8 @@ new #[Layout('components.layouts.app')] class extends Component {
     {
         $employee->delete();
         Flux::toast(
-            heading: 'Empleado eliminado',
-            text: 'El empleado ha sido eliminado exitosamente.',
+            heading: 'Integrante eliminado',
+            text: 'El integrante ha sido eliminado exitosamente.',
             variant: 'success',
             position: 'top-right',
         );
@@ -176,8 +196,8 @@ new #[Layout('components.layouts.app')] class extends Component {
         $employee->update(['active' => !$employee->active]);
         
         Flux::toast(
-            heading: $employee->active ? 'Empleado activado' : 'Empleado desactivado',
-            text: 'El estado del empleado ha sido actualizado.',
+            heading: $employee->active ? 'Integrante activado' : 'Integrante desactivado',
+            text: 'El estado del integrante ha sido actualizado.',
             variant: 'success',
             position: 'top-right',
         );
@@ -228,8 +248,132 @@ new #[Layout('components.layouts.app')] class extends Component {
                 $this->sortBy,
                 $this->sortDirection
             ),
-            'empleados-' . now()->format('d-m-Y h:i a') . '.xlsx'
+            'integrantes-' . now()->format('d-m-Y h:i a') . '.xlsx'
         );
+    }
+
+    public function openImport(): void
+    {
+        $this->resetImport();
+        Flux::modal('employees-import')->show();
+    }
+
+    public function resetImport(): void
+    {
+        $this->reset([
+            'importFile', 'importing', 'importFinished', 'importToken', 'importTotal',
+            'importProcessed', 'importCreated', 'importSkipped', 'importInvalid',
+            'importUsers', 'importError',
+        ]);
+        $this->importMissingCategories = [];
+        $this->resetValidation();
+    }
+
+    public function startImport(): void
+    {
+        $this->validate([
+            'importFile' => 'required|file|mimes:xlsx,xls|max:20480',
+        ], [], ['importFile' => 'archivo']);
+
+        $this->importError = null;
+
+        try {
+            $rows = (new EmployeeImportService())->parse($this->importFile->getRealPath());
+        } catch (\Throwable $e) {
+            $this->importError = 'No se pudo leer el archivo: ' . $e->getMessage();
+
+            return;
+        }
+
+        if (empty($rows)) {
+            $this->importError = 'El archivo no contiene filas para importar.';
+
+            return;
+        }
+
+        $token = (string) Str::uuid();
+        Storage::disk('local')->put("imports/{$token}.json", json_encode($rows));
+
+        $this->importToken = $token;
+        $this->importTotal = count($rows);
+        $this->importProcessed = 0;
+        $this->importCreated = 0;
+        $this->importSkipped = 0;
+        $this->importInvalid = 0;
+        $this->importUsers = 0;
+        $this->importMissingCategories = [];
+        $this->importFinished = false;
+        $this->importing = true;
+
+        // Inicia el bucle de procesamiento por lotes (ver x-on:import-continue en la vista).
+        $this->dispatch('import-continue');
+    }
+
+    public function processImportChunk(): void
+    {
+        if (! $this->importing || ! $this->importToken) {
+            return;
+        }
+
+        $path = "imports/{$this->importToken}.json";
+
+        if (! Storage::disk('local')->exists($path)) {
+            $this->importError = 'Se perdió el archivo temporal de importación. Vuelve a intentarlo.';
+            $this->importing = false;
+
+            return;
+        }
+
+        $rows = json_decode(Storage::disk('local')->get($path), true) ?: [];
+        $slice = array_slice($rows, $this->importProcessed, $this->importChunkSize);
+
+        $service = new EmployeeImportService();
+
+        foreach ($slice as $row) {
+            try {
+                $result = $service->importRow($row);
+
+                match ($result['status']) {
+                    'created' => $this->importCreated++,
+                    'skipped' => $this->importSkipped++,
+                    default => $this->importInvalid++,
+                };
+
+                if ($result['user_created']) {
+                    $this->importUsers++;
+                }
+
+                foreach ($result['missing_categories'] as $code) {
+                    if (! in_array($code, $this->importMissingCategories, true)) {
+                        $this->importMissingCategories[] = $code;
+                    }
+                }
+            } catch (\Throwable $e) {
+                report($e);
+                $this->importInvalid++;
+            }
+
+            $this->importProcessed++;
+        }
+
+        if ($this->importProcessed >= $this->importTotal) {
+            $this->importing = false;
+            $this->importFinished = true;
+            Storage::disk('local')->delete($path);
+            $this->resetPage();
+        } else {
+            // Continúa con el siguiente lote.
+            $this->dispatch('import-continue');
+        }
+    }
+
+    public function getImportProgressProperty(): int
+    {
+        if ($this->importTotal <= 0) {
+            return 0;
+        }
+
+        return (int) floor(($this->importProcessed / $this->importTotal) * 100);
     }
 
     public function with(): array
@@ -242,16 +386,17 @@ new #[Layout('components.layouts.app')] class extends Component {
     }
 }; ?>
 
-<div>
+<div x-on:import-continue.window="$wire.processImportChunk()">
     <div class="md:flex md:justify-between items-center">
         <div class="">
-            <flux:heading size="xl">{{ __('app.Employees') }}</flux:heading>
-            <flux:subheading>{{ __('app.Employee management and user synchronization') }}</flux:subheading>
+            <flux:heading size="xl">{{ __('Employees') }}</flux:heading>
+            <flux:subheading>{{ __('Employee management and user synchronization') }}</flux:subheading>
         </div>
         <div class="flex gap-2">
-            <flux:button icon="plus" wire:click="openModal" variant="primary" size="sm">{{ __('app.Add Employee') }}</flux:button>
+            <flux:button icon="plus" wire:click="openModal" variant="primary" size="sm">{{ __('Add Employee') }}</flux:button>
             <flux:separator vertical />
-            <flux:button wire:click="export" icon="document-arrow-down" variant="outline" size="sm">{{ __('app.Export Excel') }}</flux:button>
+            <flux:button wire:click="openImport" icon="arrow-up-tray" variant="outline" size="sm">{{ __('Import Excel') }}</flux:button>
+            <flux:button wire:click="export" icon="document-arrow-down" variant="outline" size="sm">{{ __('Export Excel') }}</flux:button>
         </div>
     </div>
 
@@ -261,23 +406,23 @@ new #[Layout('components.layouts.app')] class extends Component {
     <flux:card class="mb-6">
         <div class="flex items-center justify-between mb-4">
             <flux:heading size="lg">{{ __('Filters') }}</flux:heading>
-            <flux:text size="sm" class="text-gray-500">{{ $this->employees->total() }} {{ __('app.employee(s)') }}</flux:text>
+            <flux:text size="sm" class="text-gray-500">{{ $this->employees->total() }} {{ __('employee(s)') }}</flux:text>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <flux:input 
                 wire:model.live="search" 
                 icon="magnifying-glass" 
-                placeholder="{{ __('app.Search employees...') }}" 
-                label="{{ __('app.Search') }}"
+                placeholder="{{ __('Search employees...') }}" 
+                label="{{ __('Search') }}"
             />
-            <flux:select wire:model.live="departmentFilter" placeholder="{{ __('app.Department') }}" label="{{ __('app.Department') }}">
-                <flux:select.option value="">{{ __('app.All departments') }}</flux:select.option>
+            <flux:select wire:model.live="departmentFilter" placeholder="{{ __('Department') }}" label="{{ __('Department') }}">
+                <flux:select.option value="">{{ __('All departments') }}</flux:select.option>
                 @foreach($departments as $key => $department)
                     <flux:select.option value="{{ $key }}">{{ $department }}</flux:select.option>
                 @endforeach
             </flux:select>
-            <flux:select wire:model.live="statusFilter" placeholder="{{ __('app.Status') }}" label="{{ __('app.Status') }}">
-                <flux:select.option value="">{{ __('app.All statuses') }}</flux:select.option>
+            <flux:select wire:model.live="statusFilter" placeholder="{{ __('Status') }}" label="{{ __('Status') }}">
+                <flux:select.option value="">{{ __('All statuses') }}</flux:select.option>
                 @foreach($statusOptions as $key => $status)
                     <flux:select.option value="{{ $key }}">{{ $status }}</flux:select.option>
                 @endforeach
@@ -287,13 +432,13 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     <flux:table :paginate="$this->employees">
         <flux:table.columns>
-            <flux:table.column sortable :sorted="$sortBy === 'code'" :direction="$sortDirection" wire:click="sort('code')">{{ __('app.Code') }}</flux:table.column>
-            <flux:table.column>{{ __('app.Employee') }}</flux:table.column>
-            <flux:table.column>{{ __('app.Contact') }}</flux:table.column>
-            <flux:table.column>{{ __('app.Position') }}</flux:table.column>
-            <flux:table.column>{{ __('app.Category') }}</flux:table.column>
-            <flux:table.column>{{ __('app.Status') }}</flux:table.column>
-            <flux:table.column>{{ __('app.User') }}</flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'code'" :direction="$sortDirection" wire:click="sort('code')">{{ __('Code') }}</flux:table.column>
+            <flux:table.column>{{ __('Employee') }}</flux:table.column>
+            <flux:table.column>{{ __('Contact') }}</flux:table.column>
+            <flux:table.column>{{ __('Position') }}</flux:table.column>
+            <flux:table.column>{{ __('Category') }}</flux:table.column>
+            <flux:table.column>{{ __('Status') }}</flux:table.column>
+            <flux:table.column>{{ __('User') }}</flux:table.column>
             <flux:table.column></flux:table.column>
         </flux:table.columns>
 
@@ -376,8 +521,8 @@ new #[Layout('components.layouts.app')] class extends Component {
     <flux:modal name="employee-modal" :open="$showModal" wire:model="showModal">
         <div class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ $editingEmployee ? 'Editar Empleado' : 'Nuevo Empleado' }}</flux:heading>
-                <flux:subheading>{{ $editingEmployee ? 'Modifica los datos del empleado' : 'Los cambios se sincronizarán automáticamente con el usuario' }}</flux:subheading>
+                <flux:heading size="lg">{{ $editingEmployee ? 'Editar Integrante' : 'Nuevo Integrante' }}</flux:heading>
+                <flux:subheading>{{ $editingEmployee ? 'Modifica los datos del integrante' : 'Los cambios se sincronizarán automáticamente con el usuario' }}</flux:subheading>
             </div>
 
             <div class="space-y-4">
@@ -459,7 +604,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </div>
 
                 <div>
-                    <flux:checkbox wire:model="active" label="Empleado activo" />
+                    <flux:checkbox wire:model="active" label="Integrante activo" />
                 </div>
             </div>
 
@@ -484,8 +629,8 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <flux:icon.trash class="h-5 w-5 text-red-600" />
                 </div>
                 <div>
-                    <flux:heading size="lg">Eliminar Empleado</flux:heading>
-                    <flux:subheading>¿Estás seguro de que quieres eliminar este empleado?</flux:subheading>
+                    <flux:heading size="lg">Eliminar Integrante</flux:heading>
+                    <flux:subheading>¿Estás seguro de que quieres eliminar este integrante?</flux:subheading>
                 </div>
             </div>
 
@@ -505,7 +650,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             @endif
 
             <flux:text class="text-gray-600">
-                Esta acción eliminará el empleado permanentemente y no se puede deshacer. También se eliminará el usuario asociado.
+                Esta acción eliminará el integrante permanentemente y no se puede deshacer. También se eliminará el usuario asociado.
             </flux:text>
 
             <div class="flex justify-end gap-3">
@@ -516,6 +661,157 @@ new #[Layout('components.layouts.app')] class extends Component {
                     Eliminar
                 </flux:button>
             </div>
+        </div>
+    </flux:modal>
+
+    <!-- Modal de importación desde Excel -->
+    <flux:modal name="employees-import" class="md:w-[640px]" :dismissible="!$importing">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">Importar integrantes</flux:heading>
+                <flux:text class="mt-2">
+                    Sube el archivo Excel de integrantes. Se usará la columna <strong>CODIGO</strong> como
+                    identificador: los integrantes que ya existen se mantienen igual y solo se crean los nuevos.
+                    Cada integrante nuevo genera automáticamente su usuario con la cédula.
+                </flux:text>
+            </div>
+
+            {{-- Paso 1: selección de archivo (antes de iniciar) --}}
+            @if (! $importing && ! $importFinished)
+                <div class="space-y-4">
+                    <flux:callout icon="information-circle" heading="Columnas esperadas">
+                        <flux:text size="sm">
+                            <strong>CODIGO</strong>, <strong>NOMBRE</strong>, <strong>CEDULA</strong>,
+                            <strong>CARGO</strong>, <strong>DEPARTAMENTO</strong> (obligatorias) y
+                            <strong>CATEGORIA</strong>, <strong>ESTADO</strong> (opcionales).
+                            Es el mismo formato que genera el botón Exportar Excel.
+                        </flux:text>
+                    </flux:callout>
+
+                    <flux:file-upload wire:model="importFile" label="Archivo de integrantes (.xlsx)">
+                        <flux:file-upload.dropzone
+                            heading="Arrastra el archivo aquí o haz clic para seleccionar"
+                            text="Formato Excel (.xlsx o .xls), hasta 20MB"
+                        />
+                    </flux:file-upload>
+
+                    @error('importFile')
+                        <flux:text size="sm" class="text-red-600 dark:text-red-400">{{ $message }}</flux:text>
+                    @enderror
+
+                    @if ($importFile)
+                        <flux:file-item heading="{{ $importFile->getClientOriginalName() }}" size="{{ $importFile->getSize() }}">
+                            <x-slot name="actions">
+                                <flux:file-item.remove wire:click="$set('importFile', null)" />
+                            </x-slot>
+                        </flux:file-item>
+                    @endif
+
+                    @if ($importError)
+                        <flux:callout variant="danger" icon="exclamation-triangle" heading="No se pudo importar">
+                            {{ $importError }}
+                        </flux:callout>
+                    @endif
+
+                    <div class="flex justify-end gap-2">
+                        <flux:button variant="ghost" x-on:click="Flux.modal('employees-import').close()">Cancelar</flux:button>
+                        <flux:button
+                            variant="primary"
+                            wire:click="startImport"
+                            icon="arrow-up-tray"
+                            :disabled="! $importFile"
+                            wire:loading.attr="disabled"
+                            wire:target="importFile, startImport"
+                        >
+                            <span wire:loading.remove wire:target="importFile, startImport">Iniciar importación</span>
+                            <span wire:loading wire:target="importFile">Cargando archivo...</span>
+                            <span wire:loading wire:target="startImport">Preparando...</span>
+                        </flux:button>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Paso 2: progreso --}}
+            @if ($importing)
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3">
+                        <flux:icon.arrow-path class="size-5 animate-spin text-blue-600" />
+                        <flux:text class="font-medium">Importando integrantes... por favor no cierres esta ventana.</flux:text>
+                    </div>
+
+                    <div>
+                        <div class="mb-1 flex justify-between text-sm text-zinc-500 dark:text-zinc-400">
+                            <span>Procesando {{ $importProcessed }} de {{ $importTotal }}</span>
+                            <span>{{ $this->importProgress }}%</span>
+                        </div>
+                        <div class="h-3 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+                            <div
+                                class="h-full rounded-full bg-blue-600 transition-all duration-300 ease-out"
+                                style="width: {{ $this->importProgress }}%"
+                            ></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3 text-center">
+                        <div class="rounded-lg bg-green-50 dark:bg-green-900/20 p-3">
+                            <div class="text-xl font-bold text-green-600">{{ $importCreated }}</div>
+                            <div class="text-xs text-zinc-500">Creados</div>
+                        </div>
+                        <div class="rounded-lg bg-zinc-50 dark:bg-zinc-800 p-3">
+                            <div class="text-xl font-bold text-zinc-600 dark:text-zinc-300">{{ $importSkipped }}</div>
+                            <div class="text-xs text-zinc-500">Ya existían</div>
+                        </div>
+                        <div class="rounded-lg bg-amber-50 dark:bg-amber-900/20 p-3">
+                            <div class="text-xl font-bold text-amber-600">{{ $importInvalid }}</div>
+                            <div class="text-xs text-zinc-500">Omitidos</div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Paso 3: reporte final --}}
+            @if ($importFinished)
+                <div class="space-y-4">
+                    <flux:callout variant="success" icon="check-circle" heading="Importación completada">
+                        Se procesaron {{ $importTotal }} registros del archivo y se generaron
+                        {{ $importUsers }} usuarios con acceso por cédula.
+                    </flux:callout>
+
+                    <div class="grid grid-cols-3 gap-3 text-center">
+                        <div class="rounded-lg bg-green-50 dark:bg-green-900/20 p-3">
+                            <div class="text-2xl font-bold text-green-600">{{ $importCreated }}</div>
+                            <div class="text-xs text-zinc-500">Integrantes creados</div>
+                        </div>
+                        <div class="rounded-lg bg-zinc-50 dark:bg-zinc-800 p-3">
+                            <div class="text-2xl font-bold text-zinc-600 dark:text-zinc-300">{{ $importSkipped }}</div>
+                            <div class="text-xs text-zinc-500">Ya existían</div>
+                        </div>
+                        <div class="rounded-lg bg-amber-50 dark:bg-amber-900/20 p-3">
+                            <div class="text-2xl font-bold text-amber-600">{{ $importInvalid }}</div>
+                            <div class="text-xs text-zinc-500">Omitidos (datos incompletos)</div>
+                        </div>
+                    </div>
+
+                    @if (! empty($importMissingCategories))
+                        <flux:callout variant="warning" icon="information-circle" heading="Categorías no encontradas">
+                            <div class="space-y-2 text-sm">
+                                <p>
+                                    Estos códigos de categoría no existen en el catálogo, así que los integrantes
+                                    se crearon <strong>sin categoría</strong>. Créalas en Categorías y luego
+                                    asígnalas al integrante:
+                                </p>
+                                <div class="font-semibold">{{ implode(', ', $importMissingCategories) }}</div>
+                            </div>
+                        </flux:callout>
+                    @endif
+
+                    <div class="flex justify-end">
+                        <flux:button variant="primary" x-on:click="Flux.modal('employees-import').close()" wire:click="resetImport">
+                            Finalizar
+                        </flux:button>
+                    </div>
+                </div>
+            @endif
         </div>
     </flux:modal>
 </div>
