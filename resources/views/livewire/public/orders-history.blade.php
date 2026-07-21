@@ -129,38 +129,15 @@ new #[Layout('components.layouts.public')] class extends Component {
 }; ?>
 
 <div>
-    {{-- header --}}
-    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center py-2">
-        <div class="text-2xl font-bold">Tiendita AJFA</div>
-        <div class="">Tienda de productos de Grupo AJFA</div>
-    </div>
-    
-    <!-- Header -->
-    <div class="bg-white shadow-sm border-b">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <flux:button variant="primary" color="blue" href="{{ route('public.orders') }}" icon="shopping-cart" class="flex items-center gap-2">
-                    Ir a la tienda
-                </flux:button>
-                <div class="flex items-center gap-2">
-                    {{-- <flux:button variant="primary" color="blue" href="{{ route('public.orders') }}" icon="plus">
-                        Nuevo Pedido
-                    </flux:button> --}}
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <flux:button type="submit" icon:trailing="log-out">
-                            Salir
-                        </flux:button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+    <x-public-header>
+        <flux:button variant="primary" color="blue" href="{{ route('public.orders') }}" icon="shopping-cart" wire:navigate>
+            Ir a la tienda
+        </flux:button>
+    </x-public-header>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Welcome Section -->
-        <div class="mb-8">
-            <flux:heading size="2xl" class="text-gray-900">¡Bienvenido, {{ $this->employee->name }}!</flux:heading>
+        <div class="mb-6">
+            <flux:heading size="xl" class="text-gray-900">Mis Pedidos</flux:heading>
             <flux:subheading class="text-gray-600">Historial y estado de tus pedidos</flux:subheading>
         </div>
 

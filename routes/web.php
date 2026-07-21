@@ -52,6 +52,9 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role.redirect', 'ensure.employee'])->group(function () {
         // Ruta de historial - siempre accesible
         Volt::route('public/orders/history', 'public.orders-history')->name('public.orders.history');
+
+        // Perfil del integrante (solo cambio de contraseña) - siempre accesible
+        Volt::route('public/profile', 'public.profile')->name('public.profile');
         
         // Ruta de creación de pedidos - protegida por estado de tienda
         Route::middleware(['ensure.store.open'])->group(function () {

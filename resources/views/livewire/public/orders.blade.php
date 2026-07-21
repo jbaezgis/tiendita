@@ -85,6 +85,12 @@ new #[Layout('components.layouts.public')] class extends Component {
         $this->resetPage();
     }
 
+    public function clearFilters(): void
+    {
+        $this->reset(['search', 'categoryFilter']);
+        $this->resetPage();
+    }
+
     public function addToCart(Product $product, $quantity = 1)
     {
         // Verificar si la tienda está abierta
@@ -105,7 +111,7 @@ new #[Layout('components.layouts.public')] class extends Component {
         $purchaseLimit = $user->category ? $user->category->purchase_limit : null;
         
         if ($purchaseLimit) {
-            $newTotal = $this->cartTotal + ($product->price * $quantity);
+            $newTotal = $this->calculateCartTotal() + ($product->price * $quantity);
             
             if ($newTotal > $purchaseLimit) {
                 Flux::toast(
@@ -143,6 +149,8 @@ new #[Layout('components.layouts.public')] class extends Component {
                 position: 'top-right'
             );
         }
+
+        $this->recalculateCart();
     }
 
     public function addToCartWithQuantity($productId)
@@ -189,7 +197,7 @@ new #[Layout('components.layouts.public')] class extends Component {
             if ($purchaseLimit) {
                 $currentItemTotal = $this->cart[$productId]['subtotal'] ?? 0;
                 $newItemTotal = $this->cart[$productId]['price'] * $quantity;
-                $newTotal = $this->cartTotal - $currentItemTotal + $newItemTotal;
+                $newTotal = $this->calculateCartTotal() - $currentItemTotal + $newItemTotal;
                 
                 if ($newTotal > $purchaseLimit) {
                     Flux::toast(
@@ -206,13 +214,13 @@ new #[Layout('components.layouts.public')] class extends Component {
             $this->cart[$productId]['subtotal'] = $this->cart[$productId]['price'] * $quantity;
         }
 
-        $this->updateCartTotals();
+        $this->recalculateCart();
     }
 
     public function removeFromCart($productId)
     {
         unset($this->cart[$productId]);
-        $this->updateCartTotals();
+        $this->recalculateCart();
         
         Flux::toast(
             heading: 'Producto eliminado',
@@ -225,7 +233,7 @@ new #[Layout('components.layouts.public')] class extends Component {
     public function clearCart()
     {
         $this->cart = [];
-        $this->updateCartTotals();
+        $this->recalculateCart();
         $this->showClearCartModal = false;
         
         Flux::toast(
@@ -266,16 +274,37 @@ new #[Layout('components.layouts.public')] class extends Component {
         }
     }
 
-    private function updateCartTotals()
+    /**
+     * Recalcula los subtotales y descarta el caché de las propiedades
+     * computadas.
+     *
+     * Livewire memoiza las propiedades computadas durante todo el request: si
+     * una se lee ANTES de mutar el carrito (p. ej. al validar el límite de
+     * compra), la vista recibiría ese valor viejo y el total quedaría un paso
+     * atrás. Hay que llamar a este método después de cualquier cambio.
+     */
+    private function recalculateCart(): void
     {
         foreach ($this->cart as &$item) {
             $item['subtotal'] = $item['price'] * $item['quantity'];
         }
+        unset($item);
+
+        unset($this->cartTotal, $this->cartCount, $this->remainingAmount, $this->isNearLimit);
+    }
+
+    /**
+     * Total del carrito sin pasar por el caché de Livewire. Úsalo dentro de los
+     * métodos que mutan el carrito; la vista debe usar $this->cartTotal.
+     */
+    private function calculateCartTotal(): float
+    {
+        return (float) collect($this->cart)->sum('subtotal');
     }
 
     public function getCartTotalProperty()
     {
-        return collect($this->cart)->sum('subtotal');
+        return $this->calculateCartTotal();
     }
 
     public function getCartCountProperty()
@@ -480,59 +509,25 @@ new #[Layout('components.layouts.public')] class extends Component {
 }; ?>
 
 <div>
-    {{-- header --}}
-    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center py-2">
-        <div class="text-2xl font-bold">Tiendita AJFA</div>
-        <div class="">Tienda de productos de Grupo AJFA</div>
-    </div>
-    
-    <!-- Header -->
-    <div class="bg-white shadow-sm border-b">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <flux:button variant="ghost" href="{{ route('public.orders.history') }}" icon="clipboard-document-list" class="flex items-center gap-2">
-                    Mis Pedidos
-                </flux:button>
-                <div class="flex items-center gap-2">
-                    <flux:button variant="primary" color="blue" wire:click="openCart" class="relative" icon="shopping-cart">
-                        Carrito
-                        @if($this->cartCount > 0)
-                            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                {{ $this->cartCount }}
-                            </span>
-                        @endif
-                    </flux:button>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <flux:button type="submit" icon:trailing="log-out">
-                            Salir
-                        </flux:button>
-                    </form>
-                </div>
-                
-                
-                {{-- <div class="flex justify-between items-center gap-4">
-                    <!-- User Info -->
-                    <div class="text-right">
-                        <flux:text class="font-medium">{{ $this->employee->name }}</flux:text>
-                        <flux:text size="sm" class="text-gray-500 block">{{ $this->employee->department }}</flux:text>
-                    </div>
-                    
-                    <!-- Cart Button -->
-                    
-                    <!-- My Orders -->
-                    
-                    <!-- Logout -->
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <flux:button type="submit" variant="ghost">
-                            Salir
-                        </flux:button>
-                    </form>
-                </div> --}}
-            </div>
-        </div>
-    </div>
+    <x-public-header>
+        <flux:button
+            variant="ghost"
+            href="{{ route('public.orders.history') }}"
+            icon="clipboard-document-list"
+            wire:navigate
+        >
+            Mis Pedidos
+        </flux:button>
+
+        <flux:button variant="primary" color="blue" wire:click="openCart" class="relative" icon="shopping-cart">
+            Carrito
+            @if($this->cartCount > 0)
+                <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {{ $this->cartCount }}
+                </span>
+            @endif
+        </flux:button>
+    </x-public-header>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Store Status Callout -->
@@ -553,12 +548,6 @@ new #[Layout('components.layouts.public')] class extends Component {
             </flux:callout> --}}
         @endif
 
-        <!-- Welcome Section -->
-        <div class="mb-6 sm:mb-8">
-            <flux:heading size="xl" class="sm:text-2xl text-gray-900 text-center sm:text-left">¡Bienvenido, {{ $this->employee->name }}!</flux:heading>
-            <flux:subheading class="text-gray-600 text-center sm:text-left">Selecciona los productos que necesitas para tu familia.</flux:subheading>
-        </div>
-
         {{-- pedido pendiente --}}
         @if($pendingOrders > 0)
             <flux:callout variant="warning" icon="clock" class="mb-8">
@@ -569,39 +558,40 @@ new #[Layout('components.layouts.public')] class extends Component {
                 </x-slot>
             </flux:callout>
         @endif
-        <!-- Filters -->
-        <flux:card class="mb-6">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                <div>
-                    <flux:heading size="lg">Productos Disponibles</flux:heading>
-                    <flux:text size="sm" class="text-gray-500">{{ $this->products->total() }} producto(s)</flux:text>
-                </div>
-                {{-- @if(!empty($cart))
-                    <flux:button 
-                        variant="ghost" 
-                        size="sm" 
-                        icon="shopping-cart"
-                        wire:click="openCart"
-                    >
-                        Ver Carrito ({{ $this->cartCount }})
-                    </flux:button>
-                @endif --}}
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <flux:input 
-                    wire:model.live="search" 
-                    icon="magnifying-glass" 
-                    placeholder="Buscar productos..." 
-                    label="Buscar"
-                />
-                <flux:select wire:model.live="categoryFilter" placeholder="Todas las categorías" label="Filtrar por categoría" variant="listbox" searchable>
-                    <flux:select.option value="">Todas las categorías</flux:select.option>
-                    @foreach($productCategories as $category)
-                        <flux:select.option value="{{ $category->id }}">{{ $category->name }}</flux:select.option>
-                    @endforeach
-                </flux:select>
-            </div>
-        </flux:card>
+        <!-- Filtros -->
+        <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <flux:input
+                wire:model.live.debounce.300ms="search"
+                icon="magnifying-glass"
+                placeholder="Buscar productos..."
+                class="flex-1"
+                clearable
+            />
+            <flux:select
+                wire:model.live="categoryFilter"
+                variant="listbox"
+                searchable
+                placeholder="Todas las categorías"
+                class="sm:w-64"
+            >
+                <flux:select.option value="">Todas las categorías</flux:select.option>
+                @foreach($productCategories as $category)
+                    <flux:select.option value="{{ $category->id }}">{{ $category->name }}</flux:select.option>
+                @endforeach
+            </flux:select>
+        </div>
+
+        <div class="mb-4 flex items-center justify-between gap-3">
+            <flux:text size="sm" class="text-zinc-500">
+                {{ $this->products->total() }} producto{{ $this->products->total() === 1 ? '' : 's' }}
+            </flux:text>
+
+            @if($search !== '' || $categoryFilter !== '')
+                <flux:button size="xs" variant="ghost" icon="x-mark" wire:click="clearFilters">
+                    Limpiar filtros
+                </flux:button>
+            @endif
+        </div>
 
         <!-- Products Grid -->
         <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 mb-8">
@@ -622,16 +612,24 @@ new #[Layout('components.layouts.public')] class extends Component {
                     @endif
                     <div class="flex-1">
                         <div class="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden relative">
+                            {{--
+                                El icono queda de fondo como respaldo: getFirstMediaUrl() devuelve
+                                una URL mientras exista el registro en `media`, aunque el archivo
+                                ya no esté en disco. Si la imagen falla, se elimina y queda el icono
+                                en lugar del recuadro roto del navegador.
+                            --}}
+                            <flux:icon.cube class="h-12 w-12 text-gray-400" />
+
                             @if($product->getFirstMediaUrl('images'))
-                                <img src="{{ $product->getFirstMediaUrl('images') }}" 
-                                     alt="{{ $product->description }}" 
-                                     class="w-full h-full object-cover">
-                            @else
-                                <flux:icon.cube class="h-12 w-12 text-gray-400" />
+                                <img src="{{ $product->getFirstMediaUrl('images') }}"
+                                     alt="{{ $product->description }}"
+                                     loading="lazy"
+                                     onerror="this.remove()"
+                                     class="absolute inset-0 w-full h-full object-cover">
                             @endif
 
                             <div class="absolute bottom-2 left-2 z-10">
-                                @if($product->category->name == 'Cuadernos')
+                                @if($product->category?->name === 'Cuadernos')
                                     <flux:badge variant="solid" color="blue" size="sm">
                                         El diseño puede variar.
                                     </flux:badge>
@@ -780,11 +778,15 @@ new #[Layout('components.layouts.public')] class extends Component {
                             <div class="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-gray-50 rounded-lg">
                                 <!-- Product Info -->
                                 <div class="flex items-center gap-3 flex-1">
-                                    <div class="w-12 h-12 rounded-lg flex items-center justify-center bg-white">
+                                    <div class="relative w-12 h-12 shrink-0 rounded-lg flex items-center justify-center bg-white overflow-hidden">
+                                        <flux:icon.cube class="h-8 w-8 text-gray-400" />
+
                                         @if($item['product']->getFirstMediaUrl('images'))
-                                            <flux:avatar circle src="{{ $item['product']->getFirstMediaUrl('images') }}" alt="{{ $item['product']->description }}"/>
-                                        @else
-                                            <flux:icon.cube class="h-8 w-8 text-gray-400" />
+                                            <img src="{{ $item['product']->getFirstMediaUrl('images') }}"
+                                                 alt="{{ $item['product']->description }}"
+                                                 loading="lazy"
+                                                 onerror="this.remove()"
+                                                 class="absolute inset-0 h-full w-full rounded-lg object-cover">
                                         @endif
                                     </div>
                                     

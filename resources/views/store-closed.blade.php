@@ -15,11 +15,18 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="font-sans antialiased">
-    {{-- header --}}
-    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center py-2">
-        <div class="text-2xl font-bold">Tiendita AJFA</div>
-        <div class="">Tienda de productos de Grupo AJFA</div>
-    </div>
+    <header class="border-b border-zinc-200 bg-white">
+        <div class="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+            <img
+                src="{{ asset('images/logo-tiendita.png') }}"
+                alt="Tiendita ValoraBrands"
+                class="h-8 w-auto sm:h-10"
+            />
+            <span class="hidden border-l border-zinc-200 pl-3 text-sm text-zinc-500 md:block">
+                Tienda de productos de ValoraBrands
+            </span>
+        </div>
+    </header>
     <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-4 lg:px-8">
         <div class="sm:mx-auto sm:w-full sm:max-w-md">
             <div class="text-center">
@@ -42,7 +49,7 @@
                             Horario de la Tienda
                         </h3>
                         <p class="text-sm text-gray-600 mb-6">
-                            La tienda está temporalmente cerrada. Los empleados no pueden realizar nuevos pedidos en este momento.
+                            La tienda está temporalmente cerrada. Los integrantes no pueden realizar nuevos pedidos en este momento.
                         </p>
                     </div>
 
