@@ -208,13 +208,13 @@
                 <img src="{{ $logoBase64 }}" alt="Logo">
             </div>
         @endif
-        <h1>Tiendita AJFA</h1>
-        <h2>Tienda de productos de Grupo AJFA</h2>
+        <h1>Tiendita Valora</h1>
+        <h2>Tienda de productos de ValoraBrands</h2>
     </div>
 
     <div class="order-info">
         <div class="info-section">
-            <h3>Información del Empleado</h3>
+            <h3>Información del Integrante</h3>
             <div class="info-row">
                 <span class="info-label">Nombre:</span>
                 <span class="info-value">{{ $order->employee->name }}</span>

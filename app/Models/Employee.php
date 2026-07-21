@@ -99,7 +99,7 @@ class Employee extends Model
                 'category_id' => $this->category_id,
             ]);
             
-            // Asignar rol de empleado automáticamente
+            // Asignar rol de integrante automáticamente
             $newUser->assignRole('empleado');
         }
     }

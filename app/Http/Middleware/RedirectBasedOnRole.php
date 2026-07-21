@@ -28,7 +28,7 @@ class RedirectBasedOnRole
         $hasEmployeeRole = $user->hasRole(['empleado', 'admin']);
         $hasAdminRole = $user->hasRole(['Super Admin', 'admin']);
 
-        // Si el usuario tiene roles múltiples (admin + empleado), redirigir al dashboard
+        // Si el usuario tiene roles múltiples (admin + integrante), redirigir al dashboard
         // if ($hasEmployeeRole && $hasAdminRole) {
         //     if ($currentRoute === 'public.orders') {
         //         return redirect()->route('dashboard');
@@ -36,7 +36,7 @@ class RedirectBasedOnRole
         //     return $next($request);
         // }
 
-        // Si el usuario es solo empleado o admin, redirigir a la tienda
+        // Si el usuario es solo integrante o admin, redirigir a la tienda
         if ($hasEmployeeRole && !$hasAdminRole && $currentRoute === 'dashboard') {
             return redirect()->route('public.orders');
         }

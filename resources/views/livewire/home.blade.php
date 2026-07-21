@@ -144,7 +144,7 @@ new #[Layout('components.layouts.public')] class extends Component {
                   </svg>
                 </div>
                 <h3 class="font-bold text-gray-900 text-lg mb-2">Precios Especiales</h3>
-                <p class="text-gray-600 text-center">Descuentos exclusivos para empleados de Valora Brands</p>
+                <p class="text-gray-600 text-center">Descuentos exclusivos para integrantes de Valora Brands</p>
               </div>
               
               <div class="flex flex-col items-center p-6 bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50">
@@ -163,7 +163,7 @@ new #[Layout('components.layouts.public')] class extends Component {
         <!-- Additional Info -->
         <div class="mt-16 p-8 bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50 max-w-4xl mx-auto">
           <p class="text-gray-700 text-center">
-            <span class="font-semibold text-lg">¿Eres empleado de Valora Brands?</span><br>
+            <span class="font-semibold text-lg">¿Eres integrante de Valora Brands?</span><br>
             <span class="text-base">Accede con tu credencial para disfrutar de precios especiales y descuentos exclusivos en útiles escolares de alta calidad.</span>
           </p>
         </div>

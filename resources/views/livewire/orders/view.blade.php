@@ -192,7 +192,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <flux:icon.user class="h-6 w-6 text-blue-600" />
                 </div>
                 <div>
-                    <flux:text size="sm" class="text-gray-600">Empleado</flux:text>
+                    <flux:text size="sm" class="text-gray-600">Integrante</flux:text>
                     <flux:text class="font-bold">{{ $order->employee->name }}</flux:text>
                     <flux:text size="sm" class="text-gray-500">{{ $order->employee->department }}</flux:text>
                 </div>
@@ -465,7 +465,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div class="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                        <flux:text class="font-medium">Empleado:</flux:text>
+                        <flux:text class="font-medium">Integrante:</flux:text>
                         <flux:text>{{ $order->employee->name }}</flux:text>
                     </div>
                     <div>

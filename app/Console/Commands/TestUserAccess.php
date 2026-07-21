@@ -54,7 +54,7 @@ class TestUserAccess extends Command
             $hasAdminRole = $user->hasRole(['Super Admin', 'admin']);
             
             if ($hasAdminRole && $hasEmployeeRole) {
-                $dashboardAccess = '✅ Completo (Admin + Empleado)';
+                $dashboardAccess = '✅ Completo (Admin + Integrante)';
             } elseif ($hasAdminRole) {
                 $dashboardAccess = '✅ Completo (Admin)';
             } elseif ($hasEmployeeRole) {

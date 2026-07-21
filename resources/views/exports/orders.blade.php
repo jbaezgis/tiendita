@@ -2,7 +2,7 @@
     <thead>
     <tr>
         <th>Número de Pedido</th>
-        <th>Empleado</th>
+        <th>Integrante</th>
         <th>Categoría</th>
         <th>Estado</th>
         <th>Prioridad</th>

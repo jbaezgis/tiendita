@@ -354,7 +354,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 </flux:button>
                                 
                                 <flux:button variant="ghost" icon="users" href="{{ route('employees.index') }}" class="w-full justify-start">
-                                    Gestionar Empleados
+                                    Gestionar Integrantes
                                 </flux:button>
                                 
                                 <flux:button variant="ghost" icon="cube" href="{{ route('products.index') }}" class="w-full justify-start">
@@ -373,10 +373,10 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <flux:callout.heading>Información Importante</flux:callout.heading>
                         <flux:callout.text>
                             <ul class="list-disc pl-5 space-y-1 text-sm">
-                                <li>Cuando la tienda está cerrada, los empleados no pueden crear nuevos pedidos</li>
+                                <li>Cuando la tienda está cerrada, los integrantes no pueden crear nuevos pedidos</li>
                                 <li>Los pedidos existentes permanecen visibles y se pueden procesar normalmente</li>
                                 <li>La configuración de temporada ayuda a organizar los productos por época del año</li>
-                                <li>El monto máximo por pedido se aplica a todos los empleados</li>
+                                <li>El monto máximo por pedido se aplica a todos los integrantes</li>
                             </ul>
                         </flux:callout.text>
                     </flux:callout>

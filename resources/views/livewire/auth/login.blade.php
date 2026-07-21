@@ -68,7 +68,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
                 $redirectUrl = route('dashboard');
                 \Log::info('User has Super Admin/Admin role, redirecting to dashboard');
             } elseif ($user->hasRole('empleado') || $user->hasRole('supervisor')) {
-                // Usuarios con rol de empleado van a la tienda
+                // Usuarios con rol de integrante van a la tienda
                 $redirectUrl = route('public.orders');
                 \Log::info('User has empleado/supervisor role, redirecting to public/orders');
             }
@@ -120,7 +120,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
 }; ?>
 
 <div class="flex flex-col gap-6">
-    <x-auth-header :title="__('app.Log in to your account')" :description="__('app.Enter your email or cedula and password below to log in')" />
+    <x-auth-header :title="__('Log in to your account')" :description="__('Enter your email or cedula and password below to log in')" />
 
     <!-- Session Status -->
     <x-auth-session-status class="text-center" :status="session('status')" />
@@ -135,7 +135,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
         <!-- Email or Cedula -->
         <flux:input
             wire:model="login_field"
-            :label="__('app.Email or Cedula')"
+            :label="__('Email or Cedula')"
             type="text"
             required
             autofocus
@@ -147,33 +147,33 @@ new #[Layout('components.layouts.auth')] class extends Component {
         <div class="relative">
             <flux:input
                 wire:model="password"
-                :label="__('app.Password')"
+                :label="__('Password')"
                 type="password"
                 required
                 autocomplete="current-password"
-                :placeholder="__('app.Password')"
+                :placeholder="__('Password')"
                 viewable
             />
 
             @if (Route::has('password.request'))
                 <flux:link class="absolute end-0 top-0 text-sm" :href="route('password.request')" wire:navigate>
-                    {{ __('app.Forgot your password?') }}
+                    {{ __('Forgot your password?') }}
                 </flux:link>
             @endif
         </div>
 
         <!-- Remember Me -->
-        <flux:checkbox wire:model="remember" :label="__('app.Remember me')" />
+        <flux:checkbox wire:model="remember" :label="__('Remember me')" />
 
         <div class="flex items-center justify-end">
-            <flux:button variant="primary" type="submit" class="w-full">{{ __('app.Log in') }}</flux:button>
+            <flux:button variant="primary" type="submit" class="w-full">{{ __('Log in') }}</flux:button>
         </div>
     </form>
 
     @if (Route::has('register'))
         <div class="text-center">
             <flux:link :href="route('register')" wire:navigate>
-                {{ __('app.Don\'t have an account?') }}
+                {{ __('Don\'t have an account?') }}
             </flux:link>
         </div>
     @endif

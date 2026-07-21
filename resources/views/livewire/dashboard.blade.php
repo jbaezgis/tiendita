@@ -244,7 +244,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         <flux:callout variant="danger" icon="exclamation-triangle">
             <flux:callout.heading>Tienda Cerrada</flux:callout.heading>
             <flux:callout.text>
-                La tienda está cerrada actualmente. Los empleados no pueden crear nuevos pedidos.
+                La tienda está cerrada actualmente. Los integrantes no pueden crear nuevos pedidos.
             </flux:callout.text>
             <x-slot name="actions">
                 <flux:button href="{{ route('store-config.index') }}" size="sm">
@@ -429,8 +429,8 @@ new #[Layout('components.layouts.app')] class extends Component {
         <flux:card>
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <flux:heading size="lg">Empleados Más Activos</flux:heading>
-                    <flux:subheading>Empleados con más pedidos realizados</flux:subheading>
+                    <flux:heading size="lg">Integrantes Más Activos</flux:heading>
+                    <flux:subheading>Integrantes con más pedidos realizados</flux:subheading>
                 </div>
             </div>
             

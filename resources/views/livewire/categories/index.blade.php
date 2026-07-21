@@ -152,11 +152,11 @@ new #[Layout('components.layouts.app')] class extends Component {
 <div>
     <div class="md:flex md:justify-between items-center">
         <div class="">
-            <flux:heading size="xl">{{ __('app.Categories') }}</flux:heading>
-            <flux:subheading>{{ __('app.Salary categories and purchase limits management') }}</flux:subheading>
+            <flux:heading size="xl">{{ __('Categories') }}</flux:heading>
+            <flux:subheading>{{ __('Salary categories and purchase limits management') }}</flux:subheading>
         </div>
         <div class="flex gap-2">
-            <flux:button icon="plus" wire:click="openModal" variant="primary" size="sm">{{ __('app.Add Category') }}</flux:button>
+            <flux:button icon="plus" wire:click="openModal" variant="primary" size="sm">{{ __('Add Category') }}</flux:button>
         </div>
     </div>
 
@@ -164,28 +164,28 @@ new #[Layout('components.layouts.app')] class extends Component {
     
     <div class="flex justify-end gap-2">
         <div class="flex items-center gap-1 text-xs">
-            <flux:text>{{ __('app.Showing') }}</flux:text>
+            <flux:text>{{ __('Showing') }}</flux:text>
             <flux:text variant="strong">{{ $this->categories->firstItem() }}</flux:text>
-            <flux:text>{{ __('app.of') }}</flux:text>
+            <flux:text>{{ __('of') }}</flux:text>
             <flux:text variant="strong">{{ $this->categories->lastItem() }}</flux:text>
-            <flux:text>{{ __('app.of') }}</flux:text>
+            <flux:text>{{ __('of') }}</flux:text>
             <flux:text variant="strong">{{ $this->categories->total() }}</flux:text>
-            <flux:text>{{ __('app.entries') }}</flux:text>
+            <flux:text>{{ __('entries') }}</flux:text>
         </div>
     </div>
 
     <div class="py-4 flex gap-4">
         <div class="flex-1">
-            <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="{{ __('app.Search categories...') }}" label="{{ __('app.Search') }}"/>
+            <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="{{ __('Search categories...') }}" label="{{ __('Search') }}"/>
         </div>
     </div>
 
     <flux:table :paginate="$this->categories">
         <flux:table.columns>
-            <flux:table.column sortable :sorted="$sortBy === 'code'" :direction="$sortDirection" wire:click="sort('code')">{{ __('app.Code') }}</flux:table.column>
-            <flux:table.column sortable :sorted="$sortBy === 'salary_from'" :direction="$sortDirection" wire:click="sort('salary_from')">{{ __('app.Salary From') }}</flux:table.column>
-            <flux:table.column sortable :sorted="$sortBy === 'salary_to'" :direction="$sortDirection" wire:click="sort('salary_to')">{{ __('app.Salary To') }}</flux:table.column>
-            <flux:table.column sortable :sorted="$sortBy === 'purchase_limit'" :direction="$sortDirection" wire:click="sort('purchase_limit')">{{ __('app.Purchase Limit') }}</flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'code'" :direction="$sortDirection" wire:click="sort('code')">{{ __('Code') }}</flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'salary_from'" :direction="$sortDirection" wire:click="sort('salary_from')">{{ __('Salary From') }}</flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'salary_to'" :direction="$sortDirection" wire:click="sort('salary_to')">{{ __('Salary To') }}</flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'purchase_limit'" :direction="$sortDirection" wire:click="sort('purchase_limit')">{{ __('Purchase Limit') }}</flux:table.column>
             <flux:table.column></flux:table.column>
         </flux:table.columns>
 
@@ -228,16 +228,16 @@ new #[Layout('components.layouts.app')] class extends Component {
     <flux:modal name="category-modal">
         <div class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ $editingCategory ? __('app.Edit Category') : __('app.Add Category') }}</flux:heading>
-                <flux:subheading>{{ $editingCategory ? __('app.Modify category data') : __('app.Enter new category data') }}</flux:subheading>
+                <flux:heading size="lg">{{ $editingCategory ? __('Edit Category') : __('Add Category') }}</flux:heading>
+                <flux:subheading>{{ $editingCategory ? __('Modify category data') : __('Enter new category data') }}</flux:subheading>
             </div>
 
             <div class="space-y-4">
                 <div>
                     <flux:input 
                         wire:model="code" 
-                        label="{{ __('app.Code') }}" 
-                        placeholder="{{ __('app.Example: CAT001') }}"
+                        label="{{ __('Code') }}" 
+                        placeholder="{{ __('Example: CAT001') }}"
                         icon="hashtag"
                     />
                     @error('code') 
@@ -249,7 +249,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <div>
                         <flux:input 
                             wire:model="salary_from" 
-                            label="{{ __('app.Salary From') }}" 
+                            label="{{ __('Salary From') }}" 
                             type="number" 
                             step="0.01"
                             min="0"
@@ -264,7 +264,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <div>
                         <flux:input 
                             wire:model="salary_to" 
-                            label="{{ __('app.Salary To') }}" 
+                            label="{{ __('Salary To') }}" 
                             type="number" 
                             step="0.01"
                             min="0"
@@ -280,7 +280,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 <div>
                     <flux:input 
                         wire:model="purchase_limit" 
-                        label="{{ __('app.Purchase Limit') }}" 
+                        label="{{ __('Purchase Limit') }}" 
                         type="number" 
                         step="0.01"
                         min="0"
@@ -297,10 +297,10 @@ new #[Layout('components.layouts.app')] class extends Component {
 
             <div class="flex justify-end gap-2">
                 <flux:button wire:click="closeModal" variant="ghost">
-                    {{ __('app.Cancel') }}
+                    {{ __('Cancel') }}
                 </flux:button>
                 <flux:button wire:click="save" variant="primary">
-                    {{ $editingCategory ? __('app.Update') : __('app.Create') }}
+                    {{ $editingCategory ? __('Update') : __('Create') }}
                 </flux:button>
             </div>
         </div>

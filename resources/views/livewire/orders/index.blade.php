@@ -245,13 +245,13 @@ new #[Layout('components.layouts.app')] class extends Component {
 <div>
     <div class="md:flex md:justify-between items-center">
         <div class="">
-            <flux:heading size="xl">{{ __('app.Order Management') }}</flux:heading>
-            <flux:subheading>{{ __('app.Employee order administration and approval') }}</flux:subheading>
+            <flux:heading size="xl">{{ __('Order Management') }}</flux:heading>
+            <flux:subheading>{{ __('Employee order administration and approval') }}</flux:subheading>
         </div>
         <div class="flex gap-2">
-            <flux:button icon="plus" href="{{ route('orders.create') }}" variant="primary" size="sm">{{ __('app.Create Order') }}</flux:button>
+            <flux:button icon="plus" href="{{ route('orders.create') }}" variant="primary" size="sm">{{ __('Create Order') }}</flux:button>
             <flux:separator vertical />
-            <flux:button wire:click="export" icon="document-arrow-down" variant="outline" size="sm">{{ __('app.Export Excel') }}</flux:button>
+            <flux:button wire:click="export" icon="document-arrow-down" variant="outline" size="sm">{{ __('Export Excel') }}</flux:button>
         </div>
     </div>
 
@@ -267,7 +267,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </div>
                 <div>
                     <flux:text class="font-bold text-2xl text-green-600">{{ $employeesAvailableForOrders }}</flux:text>
-                    <flux:text size="sm" class="text-gray-600">{{ __('app.Available employees') }}</flux:text>
+                    <flux:text size="sm" class="text-gray-600">{{ __('Available employees') }}</flux:text>
                 </div>
             </div>
         </flux:card>
@@ -280,7 +280,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </div>
                 <div>
                     <flux:text class="font-bold text-2xl text-yellow-600">{{ $employeesWithPendingOrders->count() }}</flux:text>
-                    <flux:text size="sm" class="text-gray-600">{{ __('app.Pending orders') }}</flux:text>
+                    <flux:text size="sm" class="text-gray-600">{{ __('Pending orders') }}</flux:text>
                 </div>
             </div>
         </flux:card>
@@ -293,7 +293,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </div>
                 <div>
                     <flux:text class="font-bold text-2xl text-blue-600">{{ $employeesWithApprovedOrders->count() }}</flux:text>
-                    <flux:text size="sm" class="text-gray-600">{{ __('app.Approved orders') }}</flux:text>
+                    <flux:text size="sm" class="text-gray-600">{{ __('Approved orders') }}</flux:text>
                 </div>
             </div>
         </flux:card>
@@ -308,10 +308,10 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </div>
                 <div class="flex-1 min-w-0">
                     <flux:heading size="lg" class="text-yellow-800 mb-3">
-                        Empleados con Pedidos Pendientes
+                        Integrantes con Pedidos Pendientes
                     </flux:heading>
                     <flux:text size="sm" class="text-yellow-700 mb-4">
-                        Estos empleados tienen pedidos pendientes que requieren aprobación inmediata.
+                        Estos integrantes tienen pedidos pendientes que requieren aprobación inmediata.
                     </flux:text>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -366,10 +366,10 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </div>
                 <div class="flex-1 min-w-0">
                     <flux:heading size="lg" class="text-blue-800 mb-3">
-                        Empleados con Pedidos Aprobados
+                        Integrantes con Pedidos Aprobados
                     </flux:heading>
                     <flux:text size="sm" class="text-blue-700 mb-4">
-                        Estos empleados tienen pedidos aprobados listos para entrega.
+                        Estos integrantes tienen pedidos aprobados listos para entrega.
                     </flux:text>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -440,8 +440,8 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <flux:select.option value="{{ $key }}">{{ $priority }}</flux:select.option>
                 @endforeach
             </flux:select>
-            <flux:select wire:model.live="employeeFilter" variant="listbox" placeholder="Empleado" label="Empleado" searchable clearable>
-                <flux:select.option value="">Todos los empleados</flux:select.option>
+            <flux:select wire:model.live="employeeFilter" variant="listbox" placeholder="Integrante" label="Integrante" searchable clearable>
+                <flux:select.option value="">Todos los integrantes</flux:select.option>
                 @foreach($employees as $employee)
                     <flux:select.option value="{{ $employee->id }}">{{ $employee->name }}</flux:select.option>
                 @endforeach
@@ -455,7 +455,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             <flux:table.column sortable :sorted="$sortBy === 'order_number'" :direction="$sortDirection" wire:click="sort('order_number')">
                 Número
             </flux:table.column>
-            <flux:table.column>Empleado</flux:table.column>
+            <flux:table.column>Integrante</flux:table.column>
             <flux:table.column sortable :sorted="$sortBy === 'order_date'" :direction="$sortDirection" wire:click="sort('order_date')">
                 Fecha
             </flux:table.column>
@@ -601,7 +601,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div class="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                            <flux:text class="font-medium">Empleado:</flux:text>
+                            <flux:text class="font-medium">Integrante:</flux:text>
                             <flux:text>{{ $selectedOrder->employee->name }}</flux:text>
                         </div>
                         <div>

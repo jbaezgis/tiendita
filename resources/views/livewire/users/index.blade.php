@@ -459,14 +459,14 @@ new class extends Component
     {
         $query = \App\Models\Employee::query();
         
-        // Si estamos editando un usuario, incluir su empleado actual
+        // Si estamos editando un usuario, incluir su integrante actual
         if ($this->selectedUser && $this->selectedUser->employee_id) {
             $query->where(function($q) {
                 $q->whereDoesntHave('user')
                   ->orWhere('id', $this->selectedUser->employee_id);
             });
         } else {
-            // Solo empleados sin usuario asignado
+            // Solo integrantes sin usuario asignado
             $query->whereDoesntHave('user');
         }
         
@@ -510,8 +510,8 @@ new class extends Component
     <!-- Header -->
     <div class="flex justify-between items-center">
         <div>
-            <flux:heading size="xl">{{ __('app.User Management') }}</flux:heading>
-            <flux:text class="text-gray-600 mt-1">{{ __('app.System user administration') }}</flux:text>
+            <flux:heading size="xl">{{ __('User Management') }}</flux:heading>
+            <flux:text class="text-gray-600 mt-1">{{ __('System user administration') }}</flux:text>
         </div>
         <div class="flex gap-2">
             <flux:button icon="arrow-down-tray" wire:click="openImportModal">
@@ -519,7 +519,7 @@ new class extends Component
             </flux:button>
             @role('Super Admin')
                 <flux:button variant="primary" icon="plus" wire:click="openCreateModal">
-                    {{ __('app.New User') }}
+                    {{ __('New User') }}
                 </flux:button>
             @endrole
         </div>
@@ -528,23 +528,23 @@ new class extends Component
     <!-- Filtros -->
     <flux:card>
         <div class="flex items-center justify-between mb-4">
-            <flux:heading size="lg">{{ __('app.Filters') }}</flux:heading>
-            <flux:text size="sm" class="text-gray-500">{{ $users->total() }} {{ __('app.user(s) found') }}</flux:text>
+            <flux:heading size="lg">{{ __('Filters') }}</flux:heading>
+            <flux:text size="sm" class="text-gray-500">{{ $users->total() }} {{ __('user(s) found') }}</flux:text>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <flux:input 
                 wire:model.live.debounce.300ms="search" 
                 icon="magnifying-glass"
-                placeholder="{{ __('app.Search user...') }}" 
+                placeholder="{{ __('Search user...') }}" 
             />
-            <flux:select wire:model.live="departmentFilter" placeholder="{{ __('app.Department') }}">
-                <flux:select.option value="">{{ __('app.All departments') }}</flux:select.option>
+            <flux:select wire:model.live="departmentFilter" placeholder="{{ __('Department') }}">
+                <flux:select.option value="">{{ __('All departments') }}</flux:select.option>
                 @foreach($departments as $key => $department)
                     <flux:select.option value="{{ $key }}">{{ $department }}</flux:select.option>
                 @endforeach
             </flux:select>
-            <flux:select wire:model.live="roleFilter" placeholder="{{ __('app.Role') }}">
-                <flux:select.option value="">{{ __('app.All roles') }}</flux:select.option>
+            <flux:select wire:model.live="roleFilter" placeholder="{{ __('Role') }}">
+                <flux:select.option value="">{{ __('All roles') }}</flux:select.option>
                 @foreach($roles as $role)
                     <flux:select.option value="{{ $role->name }}">{{ $role->name }}</flux:select.option>
                 @endforeach
@@ -556,15 +556,15 @@ new class extends Component
     <flux:card>
         <flux:table :paginate="$users">
             <flux:table.columns>
-                <flux:table.column>{{ __('app.User') }}</flux:table.column>
-                <flux:table.column>{{ __('app.Contact') }}</flux:table.column>
-                <flux:table.column>{{ __('app.Position') }}</flux:table.column>
-                <flux:table.column>{{ __('app.Department') }}</flux:table.column>
-                <flux:table.column>{{ __('app.Category') }}</flux:table.column>
-                <flux:table.column>{{ __('app.Roles') }}</flux:table.column>
-                <flux:table.column>{{ __('app.Employee') }}</flux:table.column>
-                <flux:table.column>{{ __('app.Status') }}</flux:table.column>
-                <flux:table.column>{{ __('app.Actions') }}</flux:table.column>
+                <flux:table.column>{{ __('User') }}</flux:table.column>
+                <flux:table.column>{{ __('Contact') }}</flux:table.column>
+                <flux:table.column>{{ __('Position') }}</flux:table.column>
+                <flux:table.column>{{ __('Department') }}</flux:table.column>
+                <flux:table.column>{{ __('Category') }}</flux:table.column>
+                <flux:table.column>{{ __('Roles') }}</flux:table.column>
+                <flux:table.column>{{ __('Employee') }}</flux:table.column>
+                <flux:table.column>{{ __('Status') }}</flux:table.column>
+                <flux:table.column>{{ __('Actions') }}</flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
@@ -634,12 +634,12 @@ new class extends Component
                             @endif
                         </flux:table.cell>
 
-                        <!-- Empleado -->
+                        <!-- Integrante -->
                         <flux:table.cell>
                             @if($user->employee)
                                 <flux:badge color="green" size="sm">{{ $user->employee->code }}</flux:badge>
                             @else
-                                <flux:badge color="gray" size="sm">Sin empleado</flux:badge>
+                                <flux:badge color="gray" size="sm">Sin integrante</flux:badge>
                             @endif
                         </flux:table.cell>
 
@@ -758,9 +758,9 @@ new class extends Component
                     </flux:field>
 
                     <flux:field>
-                        <flux:label>Empleado Vinculado</flux:label>
-                        <flux:select wire:model="form.employee_id" placeholder="Seleccionar empleado">
-                            <flux:select.option value="">Sin empleado</flux:select.option>
+                        <flux:label>Integrante Vinculado</flux:label>
+                        <flux:select wire:model="form.employee_id" placeholder="Seleccionar integrante">
+                            <flux:select.option value="">Sin integrante</flux:select.option>
                             @foreach($employees as $employee)
                                 <flux:select.option value="{{ $employee->id }}">
                                     {{ $employee->code }} - {{ $employee->name }}
@@ -768,7 +768,7 @@ new class extends Component
                             @endforeach
                         </flux:select>
                         <flux:error name="form.employee_id" />
-                        <flux:description>Se muestran solo empleados sin usuario asignado</flux:description>
+                        <flux:description>Se muestran solo integrantes sin usuario asignado</flux:description>
                     </flux:field>
 
                     <flux:field class="md:col-span-2">
@@ -855,17 +855,17 @@ new class extends Component
                     </flux:field>
 
                     @if($selectedUser && $selectedUser->employee_id)
-                        <flux:input label="Empleado Vinculado" value="{{ $selectedUser->employee->code }} - {{ $selectedUser->employee->name }}" />
+                        <flux:input label="Integrante Vinculado" value="{{ $selectedUser->employee->code }} - {{ $selectedUser->employee->name }}" />
                     @else
-                    <flux:select label="Empleado Vinculado" wire:model="form.employee_id" placeholder="Seleccionar empleado" variant="listbox" searchable >
-                        <flux:select.option value="">Sin empleado</flux:select.option>
+                    <flux:select label="Integrante Vinculado" wire:model="form.employee_id" placeholder="Seleccionar integrante" variant="listbox" searchable >
+                        <flux:select.option value="">Sin integrante</flux:select.option>
                         @foreach($employees as $employee)
                             <flux:select.option value="{{ $employee->id }}">
                                 {{ $employee->code }} - {{ $employee->name }}
                             </flux:select.option>
                         @endforeach
                     </flux:select>
-                    <flux:description>Se muestran empleados sin usuario asignado y el empleado actual (si existe)</flux:description>
+                    <flux:description>Se muestran integrantes sin usuario asignado y el integrante actual (si existe)</flux:description>
                         
                     @endif
                     <flux:field class="md:col-span-2">
@@ -920,7 +920,7 @@ new class extends Component
                             • Categoría: {{ $selectedUser->category->code }} (Límite: RD$ {{ number_format($selectedUser->category->purchase_limit, 2) }})<br>
                         @endif
                         @if($selectedUser->employee)
-                            • Empleado: {{ $selectedUser->employee->code }}<br>
+                            • Integrante: {{ $selectedUser->employee->code }}<br>
                         @endif
                     </flux:text>
                 </div>

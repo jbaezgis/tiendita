@@ -178,19 +178,19 @@ new #[Layout('components.layouts.app')] class extends Component {
     
     <div class="flex justify-end gap-2">
         <div class="flex items-center gap-1 text-xs">
-            <flux:text>{{ __('app.Showing') }}</flux:text>
+            <flux:text>{{ __('Showing') }}</flux:text>
             <flux:text variant="strong">{{ $this->categories->firstItem() }}</flux:text>
-            <flux:text>{{ __('app.of') }}</flux:text>
+            <flux:text>{{ __('of') }}</flux:text>
             <flux:text variant="strong">{{ $this->categories->lastItem() }}</flux:text>
-            <flux:text>{{ __('app.of') }}</flux:text>
+            <flux:text>{{ __('of') }}</flux:text>
             <flux:text variant="strong">{{ $this->categories->total() }}</flux:text>
-            <flux:text>{{ __('app.entries') }}</flux:text>
+            <flux:text>{{ __('entries') }}</flux:text>
         </div>
     </div>
 
     <div class="py-4 flex gap-4">
         <div class="flex-1">
-            <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="{{ __('app.Search') }}..." label="{{ __('app.Search') }}"/>
+            <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="{{ __('Search') }}..." label="{{ __('Search') }}"/>
         </div>
     </div>
 

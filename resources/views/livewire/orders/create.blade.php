@@ -83,7 +83,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         if (!$this->employee_id) {
             Flux::toast(
                 heading: 'Error',
-                text: 'Selecciona un empleado primero',
+                text: 'Selecciona un integrante primero',
                 variant: 'error',
                 position: 'top-right'
             );
@@ -223,8 +223,8 @@ new #[Layout('components.layouts.app')] class extends Component {
             'order_date' => 'required|date',
             'notes' => 'nullable|string|max:1000',
         ], [
-            'employee_id.required' => 'Debes seleccionar un empleado',
-            'employee_id.exists' => 'El empleado seleccionado no existe',
+            'employee_id.required' => 'Debes seleccionar un integrante',
+            'employee_id.exists' => 'El integrante seleccionado no existe',
             'priority.required' => 'La prioridad es obligatoria',
             'priority.in' => 'La prioridad seleccionada no es válida',
             'order_date.required' => 'La fecha del pedido es obligatoria',
@@ -326,7 +326,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     <div class="md:flex md:justify-between items-center">
         <div class="">
             <flux:heading size="xl">Crear Nuevo Pedido</flux:heading>
-            <flux:subheading>Crear pedido interno para empleado</flux:subheading>
+            <flux:subheading>Crear pedido interno para integrante</flux:subheading>
         </div>
         <div class="flex gap-2">
             <flux:button icon="arrow-left" href="{{ route('orders.index') }}" variant="ghost" size="sm">
@@ -359,7 +359,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 <flux:heading size="lg" class="mb-4">Información del Pedido</flux:heading>
                 
                 <div class="space-y-4">
-                    <flux:select variant="listbox" wire:model.live="employee_id" placeholder="Seleccionar empleado" label="Empleado" searchable>
+                    <flux:select variant="listbox" wire:model.live="employee_id" placeholder="Seleccionar integrante" label="Integrante" searchable>
                         @foreach($employees as $employee)
                             <flux:select.option value="{{ $employee->id }}">
                                 {{ $employee->name }} - {{ $employee->department }}
