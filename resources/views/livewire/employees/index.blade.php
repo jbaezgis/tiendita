@@ -24,7 +24,9 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public $search = '';
     public $departmentFilter = '';
-    public $statusFilter = '';
+    /** El listado y su exportación son del padrón vigente; los inactivos
+     *  tienen su propia pantalla. */
+    public $statusFilter = '1';
     public $perPage = 10;
     public $sortBy = 'id';
     public $sortDirection = 'desc';
@@ -231,10 +233,10 @@ new #[Layout('components.layouts.app')] class extends Component {
             $query->where('department', $this->departmentFilter);
         });
 
-        if ($this->statusFilter !== '') {
-            $query->where('active', $this->statusFilter);
-        }
-        
+        // Los inactivos viven en su propia pantalla (employees.inactivos),
+        // para que este listado sea el padrón vigente.
+        $query->where('active', true);
+
         return $query->paginate($this->perPage);
     }
 
@@ -408,7 +410,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             <flux:heading size="lg">{{ __('Filters') }}</flux:heading>
             <flux:text size="sm" class="text-gray-500">{{ $this->employees->total() }} {{ __('employee(s)') }}</flux:text>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <flux:input 
                 wire:model.live="search" 
                 icon="magnifying-glass" 
@@ -421,12 +423,11 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <flux:select.option value="{{ $key }}">{{ $department }}</flux:select.option>
                 @endforeach
             </flux:select>
-            <flux:select wire:model.live="statusFilter" placeholder="{{ __('Status') }}" label="{{ __('Status') }}">
-                <flux:select.option value="">{{ __('All statuses') }}</flux:select.option>
-                @foreach($statusOptions as $key => $status)
-                    <flux:select.option value="{{ $key }}">{{ $status }}</flux:select.option>
-                @endforeach
-            </flux:select>
+            <div class="flex items-end">
+                <flux:button icon="archive-box" variant="ghost" :href="route('employees.inactivos')" wire:navigate>
+                    Ver histórico de inactivos
+                </flux:button>
+            </div>
         </div>
     </flux:card>
 

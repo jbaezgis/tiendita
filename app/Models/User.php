@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -12,8 +14,8 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    /** @use HasFactory<UserFactory> */
+    use HasFactory, HasRoles, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -84,7 +86,7 @@ class User extends Authenticatable
      * Find the user instance for the given username.
      *
      * @param  string  $username
-     * @return \App\Models\User|null
+     * @return User|null
      */
     public function findForPassport($username)
     {
@@ -94,29 +96,49 @@ class User extends Authenticatable
     /**
      * Scope to find user by email or cédula
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $identifier
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @param  string  $identifier
+     * @return Builder
      */
     public function scopeFindByEmailOrCedula($query, $identifier)
     {
         return $query->where(function ($q) use ($identifier) {
             $q->where('email', $identifier)
-              ->orWhere('cedula', $identifier);
+                ->orWhere('cedula', $identifier);
         });
     }
 
     /**
      * Find user by email or cédula
      *
-     * @param string $identifier
-     * @return \App\Models\User|null
+     * @param  string  $identifier
+     * @return User|null
      */
     public static function findByEmailOrCedula($identifier)
     {
         return static::where(function ($query) use ($identifier) {
             $query->where('email', $identifier)
-                  ->orWhere('cedula', $identifier);
+                ->orWhere('cedula', $identifier);
         })->first();
+    }
+
+    /**
+     * ¿La cuenta pertenece a un integrante que ya no está activo?
+     *
+     * Los integrantes que salen de la empresa conservan su usuario y su
+     * historial de pedidos —por eso no se borran—, pero no deben poder seguir
+     * comprando. Las cuentas administrativas no cuelgan de un integrante, así
+     * que nunca quedan bloqueadas por esta vía.
+     */
+    public function isBlockedByInactiveEmployee(): bool
+    {
+        if (! $this->employee_id) {
+            return false;
+        }
+
+        // Se consulta directo en vez de usar la relación: si ya venía cargada
+        // en memoria (por ejemplo desde antes de la sincronización), el estado
+        // en caché diría que sigue activo.
+        return ! Employee::whereKey($this->employee_id)->where('active', true)->exists();
     }
 }

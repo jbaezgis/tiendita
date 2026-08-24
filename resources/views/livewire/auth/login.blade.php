@@ -53,6 +53,19 @@ new #[Layout('components.layouts.auth')] class extends Component {
                 ]);
             }
 
+            // Un integrante dado de baja conserva su cuenta y su historial de
+            // pedidos, pero no debe poder seguir comprando.
+            if (Auth::user()->isBlockedByInactiveEmployee()) {
+                Auth::logout();
+                Session::invalidate();
+                Session::regenerateToken();
+                $this->message = '❌ Acceso desactivado';
+
+                throw ValidationException::withMessages([
+                    'login_field' => 'Tu acceso a la tienda fue desactivado porque ya no figuras como integrante activo.',
+                ]);
+            }
+
             \Log::info('Auth successful, user: ' . Auth::user()->name);
             RateLimiter::clear($this->throttleKey());
             Session::regenerate();
