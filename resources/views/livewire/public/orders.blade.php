@@ -733,8 +733,8 @@ new #[Layout('components.layouts.public')] class extends Component {
                     </flux:button>
                 </div>
             </div>
-            @if($purchaseLimit)
-                <div class="mt-2 text-center sm:text-left">
+            <div class="mt-2 text-center sm:text-left">
+                @if($purchaseLimit)
                     <flux:text size="sm" class="text-gray-500">
                         Límite: RD$ {{ number_format($purchaseLimit, 2) }}
                         @if($this->cartTotal > $purchaseLimit)

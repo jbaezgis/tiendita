@@ -6,7 +6,6 @@ use App\Models\Employee;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\StoreConfig;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Volt\Volt;
@@ -210,4 +209,39 @@ it('Mi Perfil no expone campos para editar datos de nómina', function () {
     $component->assertSet('current_password', '')
         ->assertSet('password', '')
         ->assertSet('password_confirmation', '');
+});
+
+it('abre el carrito al pulsar el boton Carrito', function () {
+    Volt::actingAs($this->user)
+        ->test('public.orders')
+        ->call('addToCart', $this->productA)
+        ->call('openCart')
+        ->assertDispatched('modal-show');
+});
+
+it('abre el modal de confirmacion al pulsar Crear Pedido', function () {
+    Volt::actingAs($this->user)
+        ->test('public.orders')
+        ->call('addToCart', $this->productA)
+        ->call('openOrderModal')
+        ->assertDispatched('modal-show');
+});
+
+it('renderiza los divs balanceados cuando el integrante no tiene limite de compra', function () {
+    // El `<div>` del pie del carrito se abria dentro de @if($purchaseLimit) y se
+    // cerraba fuera: sin limite sobraba un `</div>` que cerraba antes de tiempo
+    // el root del componente y dejaba los <flux:modal> fuera de el, por lo que
+    // "Carrito" y "Crear Pedido" no abrian nada.
+    $this->user->update(['category_id' => null]);
+
+    $html = Volt::actingAs($this->user->fresh())
+        ->test('public.orders')
+        ->call('addToCart', $this->productA)
+        ->assertSee('Sin límite de compra')
+        ->html();
+
+    $abiertos = preg_match_all('/<div\b/i', $html);
+    $cerrados = preg_match_all('/<\/div>/i', $html);
+
+    expect($cerrados)->toBe($abiertos);
 });
